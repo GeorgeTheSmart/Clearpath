@@ -1,0 +1,127 @@
+{
+ "t_det": 170,
+ "ranking": [
+  [
+   "currencyservice",
+   0.5125902528588544
+  ],
+  [
+   "productcatalogservice",
+   0.07190520616144057
+  ],
+  [
+   "emailservice",
+   0.06749157962732547
+  ],
+  [
+   "redis-cart",
+   0.057483060561398965
+  ],
+  [
+   "paymentservice",
+   0.05434958868248171
+  ],
+  [
+   "shippingservice",
+   0.05038039738353591
+  ],
+  [
+   "adservice",
+   0.04407496288786519
+  ],
+  [
+   "cartservice",
+   0.04250658489180395
+  ],
+  [
+   "recommendationservice",
+   0.04120969966177698
+  ],
+  [
+   "frontend",
+   0.036407419874510065
+  ],
+  [
+   "checkoutservice",
+   0.021601247409006968
+  ]
+ ],
+ "incident_id": "inc-10224",
+ "t_received": 1794992177.938737,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.000773066999954608,
+  "gather_context": 0.00250801699985459,
+  "sanitize": 0.001350514000023395,
+  "retrieve": 0.0007884940000622009,
+  "diagnose": 0.00015411799995490583,
+  "open_ticket": 0.006061401000351907,
+  "await_approval": 0.0008472879999317229
+ },
+ "burn_rate": 3.3292197736195277,
+ "diagnosis": {
+  "root_cause_service": "currencyservice",
+  "fault_type": "latency_injection",
+  "confidence": 0.5,
+  "summary": "Likely latency_injection on currencyservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks currencyservice first"
+   },
+   {
+    "ref": "log:log-00143",
+    "claim": "currencyservice: upstream request took 4033ms (p99 budget 200ms)"
+   },
+   {
+    "ref": "log:log-00149",
+    "claim": "currencyservice: request timeout after 4118ms"
+   },
+   {
+    "ref": "log:log-00157",
+    "claim": "currencyservice: upstream request took 2838ms (p99 budget 200ms)"
+   },
+   {
+    "ref": "rb:rb-latency_injection#diagnosis",
+    "claim": "matching runbook: Network latency to a dependency"
+   }
+  ],
+  "fix_steps": [
+   "Check for network chaos, a noisy neighbour, or a degraded node (`kubectl describe node`).",
+   "Mitigate: move the pods (rollout restart onto other nodes) or fail over.",
+   "Follow up: set client timeouts below the upstream budget and add retries with jitter."
+  ],
+  "risk_level": "medium",
+  "proposed_actions": [
+   {
+    "kind": "rollout_restart",
+    "target": "currencyservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "db3c56708a2747579ffe2bf80503df06",
+  "number": "INC0010225",
+  "urgency": "2",
+  "impact": "3",
+  "affected_cis": 3
+ },
+ "time_to_ticket_s": 0.01087045669555664,
+ "proposed_actions": [
+  {
+   "kind": "rollout_restart",
+   "target": "currencyservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "487632c34f54f137"
+}

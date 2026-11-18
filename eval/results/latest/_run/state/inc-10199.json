@@ -1,0 +1,125 @@
+{
+ "t_det": 142,
+ "ranking": [
+  [
+   "redis-cart",
+   0.7095327811145578
+  ],
+  [
+   "cartservice",
+   0.04979791659365538
+  ],
+  [
+   "productcatalogservice",
+   0.03891629177314784
+  ],
+  [
+   "emailservice",
+   0.0357441935284643
+  ],
+  [
+   "adservice",
+   0.03408050888866874
+  ],
+  [
+   "currencyservice",
+   0.03322633172342164
+  ],
+  [
+   "paymentservice",
+   0.02714536443215794
+  ],
+  [
+   "recommendationservice",
+   0.022747298126897474
+  ],
+  [
+   "shippingservice",
+   0.020329299209572254
+  ],
+  [
+   "frontend",
+   0.015369123908236242
+  ],
+  [
+   "checkoutservice",
+   0.013110890701220297
+  ]
+ ],
+ "incident_id": "inc-10199",
+ "t_received": 1794992177.3829684,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.000824558999738656,
+  "gather_context": 0.002938830999937636,
+  "sanitize": 0.0017867490000753605,
+  "retrieve": 0.0009572429999025189,
+  "diagnose": 9.99640001282387e-05,
+  "open_ticket": 0.004012616000181879,
+  "await_approval": 0.0007615529998474813
+ },
+ "burn_rate": 2.5985808771825547,
+ "diagnosis": {
+  "root_cause_service": "redis-cart",
+  "fault_type": "latency_injection",
+  "confidence": 0.5,
+  "summary": "Likely latency_injection on redis-cart (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks redis-cart first"
+   },
+   {
+    "ref": "log:log-00138",
+    "claim": "redis-cart: request timeout after 4690ms"
+   },
+   {
+    "ref": "log:log-00140",
+    "claim": "redis-cart: slow response from network peer"
+   },
+   {
+    "ref": "log:log-00142",
+    "claim": "redis-cart: slow response from network peer"
+   },
+   {
+    "ref": "rb:rb-latency_injection#symptoms",
+    "claim": "matching runbook: Network latency to a dependency"
+   }
+  ],
+  "fix_steps": [
+   "Follow the matching runbook."
+  ],
+  "risk_level": "medium",
+  "proposed_actions": [
+   {
+    "kind": "rollout_restart",
+    "target": "redis-cart",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "4bf402e16e964e3da229ac8dfb3834e0",
+  "number": "INC0010200",
+  "urgency": "2",
+  "impact": "3",
+  "affected_cis": 2
+ },
+ "time_to_ticket_s": 0.009893417358398438,
+ "proposed_actions": [
+  {
+   "kind": "rollout_restart",
+   "target": "redis-cart",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "a0d9a9a9728b95a9"
+}

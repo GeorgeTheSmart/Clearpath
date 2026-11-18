@@ -1,0 +1,127 @@
+{
+ "t_det": 125,
+ "ranking": [
+  [
+   "shippingservice",
+   0.47753704065575286
+  ],
+  [
+   "checkoutservice",
+   0.07955696981014931
+  ],
+  [
+   "currencyservice",
+   0.07072250833749608
+  ],
+  [
+   "redis-cart",
+   0.06769355229997984
+  ],
+  [
+   "paymentservice",
+   0.05356995282381499
+  ],
+  [
+   "cartservice",
+   0.049310198513362845
+  ],
+  [
+   "recommendationservice",
+   0.046543435377833585
+  ],
+  [
+   "emailservice",
+   0.04522956734019388
+  ],
+  [
+   "adservice",
+   0.04480774142536513
+  ],
+  [
+   "productcatalogservice",
+   0.04422157404420511
+  ],
+  [
+   "frontend",
+   0.0208074593718463
+  ]
+ ],
+ "incident_id": "inc-10061",
+ "t_received": 1794992174.1623955,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.00057847900006891,
+  "gather_context": 0.002822874000230513,
+  "sanitize": 0.0015429810000568978,
+  "retrieve": 0.0009130339999501302,
+  "diagnose": 0.0001381089996357332,
+  "open_ticket": 0.0055123470001490205,
+  "await_approval": 0.0009078759999283648
+ },
+ "burn_rate": 8.160933321750006,
+ "diagnosis": {
+  "root_cause_service": "shippingservice",
+  "fault_type": "cpu_hog",
+  "confidence": 0.5,
+  "summary": "Likely cpu_hog on shippingservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks shippingservice first"
+   },
+   {
+    "ref": "log:log-00146",
+    "claim": "shippingservice: event loop blocked for 3748ms"
+   },
+   {
+    "ref": "log:log-00148",
+    "claim": "shippingservice: handler exceeded deadline while waiting for worker thread"
+   },
+   {
+    "ref": "log:log-00157",
+    "claim": "shippingservice: request handling slow, worker pool saturated (135 queued)"
+   },
+   {
+    "ref": "rb:rb-cpu_hog#diagnosis",
+    "claim": "matching runbook: CPU saturation / CPU hog"
+   }
+  ],
+  "fix_steps": [
+   "Check for a hot loop or runaway job in recent logs (blocked event loop, worker pool saturated, handler deadline exceeded).",
+   "Mitigate: scale out the deployment (`scale` action) or roll back if a recent release introduced the hot path.",
+   "Follow up: profile (pprof / async-profiler) and set realistic CPU requests/limits."
+  ],
+  "risk_level": "medium",
+  "proposed_actions": [
+   {
+    "kind": "scale",
+    "target": "shippingservice",
+    "replicas": 3
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "df8732570a164a9f93b45c373463aa8c",
+  "number": "INC0010062",
+  "urgency": "2",
+  "impact": "2",
+  "affected_cis": 3
+ },
+ "time_to_ticket_s": 0.01064443588256836,
+ "proposed_actions": [
+  {
+   "kind": "scale",
+   "target": "shippingservice",
+   "replicas": 3
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "183317e6edc9e705"
+}

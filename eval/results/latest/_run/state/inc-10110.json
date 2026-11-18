@@ -1,0 +1,127 @@
+{
+ "t_det": 132,
+ "ranking": [
+  [
+   "cartservice",
+   0.4448828462775736
+  ],
+  [
+   "checkoutservice",
+   0.09056578271734546
+  ],
+  [
+   "frontend",
+   0.07778532146227457
+  ],
+  [
+   "productcatalogservice",
+   0.07465943718671111
+  ],
+  [
+   "redis-cart",
+   0.07329245339407499
+  ],
+  [
+   "currencyservice",
+   0.056334854651895125
+  ],
+  [
+   "shippingservice",
+   0.045224321227269194
+  ],
+  [
+   "emailservice",
+   0.04218458034716003
+  ],
+  [
+   "paymentservice",
+   0.03852000549876092
+  ],
+  [
+   "adservice",
+   0.03475429932925386
+  ],
+  [
+   "recommendationservice",
+   0.02179609790768127
+  ]
+ ],
+ "incident_id": "inc-10110",
+ "t_received": 1794992175.2876465,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.000993424000171217,
+  "gather_context": 0.0037606260002576164,
+  "sanitize": 0.0049922140001399384,
+  "retrieve": 0.001361434000045847,
+  "diagnose": 0.00013490299988916377,
+  "open_ticket": 0.007859744999677787,
+  "await_approval": 0.0009281229999942298
+ },
+ "burn_rate": 22.65493753882986,
+ "diagnosis": {
+  "root_cause_service": "cartservice",
+  "fault_type": "bad_deploy",
+  "confidence": 0.5,
+  "summary": "Likely bad_deploy on cartservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks cartservice first"
+   },
+   {
+    "ref": "log:log-00132",
+    "claim": "cartservice: TypeError: cannot read property of undefined"
+   },
+   {
+    "ref": "log:log-00136",
+    "claim": "cartservice: unhandled exception in handler: KeyError 'REDIS_ADDR'"
+   },
+   {
+    "ref": "log:log-00147",
+    "claim": "cartservice: assertion failed in release v1.1"
+   },
+   {
+    "ref": "rb:rb-bad_deploy#diagnosis",
+    "claim": "matching runbook: Bad deploy (regression in a new release)"
+   }
+  ],
+  "fix_steps": [
+   "Check for new exception types (KeyError, TypeError, assertion failures) after the rollout.",
+   "Mitigate: roll back to the previous revision (`rollback` action).",
+   "Follow up: add a canary stage with automated analysis before full rollout."
+  ],
+  "risk_level": "high",
+  "proposed_actions": [
+   {
+    "kind": "rollback",
+    "target": "cartservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "77a7c85a9f784dad8dd142e362745bd4",
+  "number": "INC0010111",
+  "urgency": "1",
+  "impact": "1",
+  "affected_cis": 4
+ },
+ "time_to_ticket_s": 0.01813960075378418,
+ "proposed_actions": [
+  {
+   "kind": "rollback",
+   "target": "cartservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "864696972f1a173f"
+}

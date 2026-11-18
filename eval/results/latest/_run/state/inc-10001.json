@@ -1,0 +1,115 @@
+{
+ "t_det": 118,
+ "ranking": [
+  [
+   "adservice",
+   0.337926675563318
+  ],
+  [
+   "recommendationservice",
+   0.23185354280078566
+  ],
+  [
+   "frontend",
+   0.07852931816409056
+  ],
+  [
+   "productcatalogservice",
+   0.0629075319322319
+  ],
+  [
+   "shippingservice",
+   0.057197814800241276
+  ],
+  [
+   "redis-cart",
+   0.05715230430672441
+  ],
+  [
+   "currencyservice",
+   0.04701535186058712
+  ],
+  [
+   "paymentservice",
+   0.041498269776250984
+  ],
+  [
+   "emailservice",
+   0.041346810504160815
+  ],
+  [
+   "cartservice",
+   0.027601360085914926
+  ],
+  [
+   "checkoutservice",
+   0.016971020205694246
+  ]
+ ],
+ "incident_id": "inc-10001",
+ "t_received": 1794992172.739245,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0005630660002680088,
+  "gather_context": 0.0029844059999959427,
+  "sanitize": 0.0019946849997722893,
+  "retrieve": 0.0007447709999723884,
+  "diagnose": 9.882499989544158e-05,
+  "open_ticket": 0.004166131999681966,
+  "await_approval": 0.0005828799999108014
+ },
+ "burn_rate": 9.67014309421269,
+ "diagnosis": {
+  "root_cause_service": "adservice",
+  "fault_type": "bad_deploy",
+  "confidence": 0.5,
+  "summary": "Likely bad_deploy on adservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks adservice first"
+   },
+   {
+    "ref": "rb:rb-bad_deploy#diagnosis",
+    "claim": "matching runbook: Bad deploy (regression in a new release)"
+   }
+  ],
+  "fix_steps": [
+   "Check for new exception types (KeyError, TypeError, assertion failures) after the rollout.",
+   "Mitigate: roll back to the previous revision (`rollback` action).",
+   "Follow up: add a canary stage with automated analysis before full rollout."
+  ],
+  "risk_level": "high",
+  "proposed_actions": [
+   {
+    "kind": "rollback",
+    "target": "adservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 2,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "2b411ebc28014547b7e0773e4c3abbd1",
+  "number": "INC0010002",
+  "urgency": "2",
+  "impact": "2",
+  "affected_cis": 2
+ },
+ "time_to_ticket_s": 0.009927749633789062,
+ "proposed_actions": [
+  {
+   "kind": "rollback",
+   "target": "adservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "4f58fe1b7b4eb1b3"
+}

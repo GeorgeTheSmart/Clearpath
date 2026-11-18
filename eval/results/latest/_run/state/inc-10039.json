@@ -1,0 +1,125 @@
+{
+ "t_det": 161,
+ "ranking": [
+  [
+   "frontend",
+   0.40776223284646695
+  ],
+  [
+   "recommendationservice",
+   0.0788923923630355
+  ],
+  [
+   "shippingservice",
+   0.07295109032841583
+  ],
+  [
+   "redis-cart",
+   0.07250223137531958
+  ],
+  [
+   "currencyservice",
+   0.06800365723433523
+  ],
+  [
+   "emailservice",
+   0.06471279552681097
+  ],
+  [
+   "productcatalogservice",
+   0.06426401733109037
+  ],
+  [
+   "adservice",
+   0.06241698811955107
+  ],
+  [
+   "cartservice",
+   0.04114206895932401
+  ],
+  [
+   "paymentservice",
+   0.03913348780778313
+  ],
+  [
+   "checkoutservice",
+   0.028219038107867404
+  ]
+ ],
+ "incident_id": "inc-10039",
+ "t_received": 1794992173.6066833,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0006006759999763744,
+  "gather_context": 0.002717911999752687,
+  "sanitize": 0.002539849000186223,
+  "retrieve": 0.001161453999884543,
+  "diagnose": 0.00010000199972637347,
+  "open_ticket": 0.009916428999986238,
+  "await_approval": 0.0009077090003302146
+ },
+ "burn_rate": 416.26939011789915,
+ "diagnosis": {
+  "root_cause_service": "frontend",
+  "fault_type": "crash_loop",
+  "confidence": 0.5,
+  "summary": "Likely crash_loop on frontend (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks frontend first"
+   },
+   {
+    "ref": "log:log-00168",
+    "claim": "frontend: fatal error: initialisation failed, exiting"
+   },
+   {
+    "ref": "log:log-00170",
+    "claim": "frontend: process exited with code 2 during startup"
+   },
+   {
+    "ref": "log:log-00174",
+    "claim": "frontend: back-off restarting failed container"
+   },
+   {
+    "ref": "rb:rb-crash_loop#symptoms",
+    "claim": "matching runbook: Crash loop (CrashLoopBackOff)"
+   }
+  ],
+  "fix_steps": [
+   "Follow the matching runbook."
+  ],
+  "risk_level": "high",
+  "proposed_actions": [
+   {
+    "kind": "rollback",
+    "target": "frontend",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "dd061b7158fe4f09ab93efdcc88da428",
+  "number": "INC0010040",
+  "urgency": "1",
+  "impact": "1",
+  "affected_cis": 8
+ },
+ "time_to_ticket_s": 0.01626443862915039,
+ "proposed_actions": [
+  {
+   "kind": "rollback",
+   "target": "frontend",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "d20101de3265589b"
+}

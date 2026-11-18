@@ -1,0 +1,127 @@
+{
+ "t_det": 147,
+ "ranking": [
+  [
+   "currencyservice",
+   0.4882695054159311
+  ],
+  [
+   "cartservice",
+   0.07208735432148076
+  ],
+  [
+   "productcatalogservice",
+   0.0680376536215092
+  ],
+  [
+   "paymentservice",
+   0.06623779096665536
+  ],
+  [
+   "shippingservice",
+   0.0637433430105602
+  ],
+  [
+   "adservice",
+   0.05314179883126477
+  ],
+  [
+   "redis-cart",
+   0.0498228084319786
+  ],
+  [
+   "checkoutservice",
+   0.04649573110616966
+  ],
+  [
+   "emailservice",
+   0.04591905145096578
+  ],
+  [
+   "recommendationservice",
+   0.02441289374500777
+  ],
+  [
+   "frontend",
+   0.02183206909847683
+  ]
+ ],
+ "incident_id": "inc-10091",
+ "t_received": 1794992174.818137,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0006632929998886539,
+  "gather_context": 0.0028424649999578833,
+  "sanitize": 0.001355974000034621,
+  "retrieve": 0.0009349619999738934,
+  "diagnose": 0.00010399399980087765,
+  "open_ticket": 0.004676733999986027,
+  "await_approval": 0.0006513120001727657
+ },
+ "burn_rate": 11.12886198572545,
+ "diagnosis": {
+  "root_cause_service": "currencyservice",
+  "fault_type": "cpu_hog",
+  "confidence": 0.5,
+  "summary": "Likely cpu_hog on currencyservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks currencyservice first"
+   },
+   {
+    "ref": "log:log-00154",
+    "claim": "currencyservice: request handling slow, worker pool saturated (199 queued)"
+   },
+   {
+    "ref": "log:log-00156",
+    "claim": "currencyservice: handler exceeded deadline while waiting for worker thread"
+   },
+   {
+    "ref": "log:log-00158",
+    "claim": "currencyservice: throttling detected: cfs_throttled_periods increased"
+   },
+   {
+    "ref": "rb:rb-cpu_hog#diagnosis",
+    "claim": "matching runbook: CPU saturation / CPU hog"
+   }
+  ],
+  "fix_steps": [
+   "Check for a hot loop or runaway job in recent logs (blocked event loop, worker pool saturated, handler deadline exceeded).",
+   "Mitigate: scale out the deployment (`scale` action) or roll back if a recent release introduced the hot path.",
+   "Follow up: profile (pprof / async-profiler) and set realistic CPU requests/limits."
+  ],
+  "risk_level": "medium",
+  "proposed_actions": [
+   {
+    "kind": "scale",
+    "target": "currencyservice",
+    "replicas": 3
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "eda047318a8e44b49a039f2877fbf9d4",
+  "number": "INC0010092",
+  "urgency": "2",
+  "impact": "2",
+  "affected_cis": 3
+ },
+ "time_to_ticket_s": 0.009933948516845703,
+ "proposed_actions": [
+  {
+   "kind": "scale",
+   "target": "currencyservice",
+   "replicas": 3
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "39e95c0d43327f30"
+}

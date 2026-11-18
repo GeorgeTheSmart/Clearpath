@@ -1,0 +1,127 @@
+{
+ "t_det": 135,
+ "ranking": [
+  [
+   "adservice",
+   0.4247851281217291
+  ],
+  [
+   "recommendationservice",
+   0.08483667636502779
+  ],
+  [
+   "shippingservice",
+   0.0792504234526362
+  ],
+  [
+   "redis-cart",
+   0.06443334241555015
+  ],
+  [
+   "paymentservice",
+   0.06036301695018313
+  ],
+  [
+   "productcatalogservice",
+   0.05921594483021765
+  ],
+  [
+   "currencyservice",
+   0.05346056197991557
+  ],
+  [
+   "emailservice",
+   0.053019518295529276
+  ],
+  [
+   "frontend",
+   0.048385554487331214
+  ],
+  [
+   "cartservice",
+   0.03902700605270285
+  ],
+  [
+   "checkoutservice",
+   0.03322282704917698
+  ]
+ ],
+ "incident_id": "inc-10205",
+ "t_received": 1794992177.522915,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0007346020001932629,
+  "gather_context": 0.0025269760003538977,
+  "sanitize": 0.0014067090000935423,
+  "retrieve": 0.0009467380000387493,
+  "diagnose": 9.997999995903228e-05,
+  "open_ticket": 0.004869017999681091,
+  "await_approval": 0.0007850869997128029
+ },
+ "burn_rate": 5.624919654092564,
+ "diagnosis": {
+  "root_cause_service": "adservice",
+  "fault_type": "cpu_hog",
+  "confidence": 0.5,
+  "summary": "Likely cpu_hog on adservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks adservice first"
+   },
+   {
+    "ref": "log:log-00131",
+    "claim": "adservice: request handling slow, worker pool saturated (14 queued)"
+   },
+   {
+    "ref": "log:log-00134",
+    "claim": "adservice: throttling detected: cfs_throttled_periods increased"
+   },
+   {
+    "ref": "log:log-00144",
+    "claim": "adservice: throttling detected: cfs_throttled_periods increased"
+   },
+   {
+    "ref": "rb:rb-cpu_hog#diagnosis",
+    "claim": "matching runbook: CPU saturation / CPU hog"
+   }
+  ],
+  "fix_steps": [
+   "Check for a hot loop or runaway job in recent logs (blocked event loop, worker pool saturated, handler deadline exceeded).",
+   "Mitigate: scale out the deployment (`scale` action) or roll back if a recent release introduced the hot path.",
+   "Follow up: profile (pprof / async-profiler) and set realistic CPU requests/limits."
+  ],
+  "risk_level": "medium",
+  "proposed_actions": [
+   {
+    "kind": "scale",
+    "target": "adservice",
+    "replicas": 3
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "30406cbd5168489797d454a78730a036",
+  "number": "INC0010206",
+  "urgency": "2",
+  "impact": "3",
+  "affected_cis": 2
+ },
+ "time_to_ticket_s": 0.009832143783569336,
+ "proposed_actions": [
+  {
+   "kind": "scale",
+   "target": "adservice",
+   "replicas": 3
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "3eaa3ae6183c1ec2"
+}

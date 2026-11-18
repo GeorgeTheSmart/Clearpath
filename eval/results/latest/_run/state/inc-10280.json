@@ -1,0 +1,125 @@
+{
+ "t_det": 170,
+ "ranking": [
+  [
+   "currencyservice",
+   0.5362535097921005
+  ],
+  [
+   "shippingservice",
+   0.07698346053175746
+  ],
+  [
+   "productcatalogservice",
+   0.07001425543296702
+  ],
+  [
+   "redis-cart",
+   0.061096528744003877
+  ],
+  [
+   "adservice",
+   0.059390669426727785
+  ],
+  [
+   "emailservice",
+   0.048426166103406464
+  ],
+  [
+   "cartservice",
+   0.04402778005477208
+  ],
+  [
+   "paymentservice",
+   0.040213940808194126
+  ],
+  [
+   "recommendationservice",
+   0.03134086079052667
+  ],
+  [
+   "checkoutservice",
+   0.01660549703384555
+  ],
+  [
+   "frontend",
+   0.015647331281698425
+  ]
+ ],
+ "incident_id": "inc-10280",
+ "t_received": 1794992179.2087557,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0010149859999728505,
+  "gather_context": 0.0032406909999735944,
+  "sanitize": 0.0018981610000992077,
+  "retrieve": 0.0011044140001104097,
+  "diagnose": 0.00011661100006676861,
+  "open_ticket": 0.005539104999570554,
+  "await_approval": 0.0011663020000014512
+ },
+ "burn_rate": 2.8607736306860625,
+ "diagnosis": {
+  "root_cause_service": "currencyservice",
+  "fault_type": "memory_leak",
+  "confidence": 0.5,
+  "summary": "Likely memory_leak on currencyservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks currencyservice first"
+   },
+   {
+    "ref": "log:log-00156",
+    "claim": "currencyservice: heap usage at 91% of limit"
+   },
+   {
+    "ref": "log:log-00157",
+    "claim": "currencyservice: container restarted: OOMKilled (exit code 137)"
+   },
+   {
+    "ref": "log:log-00163",
+    "claim": "currencyservice: container restarted: OOMKilled (exit code 137)"
+   },
+   {
+    "ref": "rb:rb-memory_leak#symptoms",
+    "claim": "matching runbook: Memory leak leading to OOMKill"
+   }
+  ],
+  "fix_steps": [
+   "Follow the matching runbook."
+  ],
+  "risk_level": "medium",
+  "proposed_actions": [
+   {
+    "kind": "rollout_restart",
+    "target": "currencyservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "9adbe29ca35d4de5b6cf0e819aac5bc6",
+  "number": "INC0010281",
+  "urgency": "2",
+  "impact": "3",
+  "affected_cis": 3
+ },
+ "time_to_ticket_s": 0.011870622634887695,
+ "proposed_actions": [
+  {
+   "kind": "rollout_restart",
+   "target": "currencyservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "31a549942b4b6494"
+}

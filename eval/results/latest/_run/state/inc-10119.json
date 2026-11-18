@@ -1,0 +1,125 @@
+{
+ "t_det": 179,
+ "ranking": [
+  [
+   "cartservice",
+   0.4229638114709373
+  ],
+  [
+   "checkoutservice",
+   0.12112349023513737
+  ],
+  [
+   "redis-cart",
+   0.10172743986402172
+  ],
+  [
+   "frontend",
+   0.06502539579153911
+  ],
+  [
+   "paymentservice",
+   0.05969084243908194
+  ],
+  [
+   "emailservice",
+   0.05319472836850359
+  ],
+  [
+   "currencyservice",
+   0.04293811105806728
+  ],
+  [
+   "productcatalogservice",
+   0.04200004485378401
+  ],
+  [
+   "shippingservice",
+   0.03885373335764542
+  ],
+  [
+   "adservice",
+   0.02663294106579576
+  ],
+  [
+   "recommendationservice",
+   0.025849461495486576
+  ]
+ ],
+ "incident_id": "inc-10119",
+ "t_received": 1794992175.5253792,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0006069050000405696,
+  "gather_context": 0.0026312730001336604,
+  "sanitize": 0.002523974999803613,
+  "retrieve": 0.0008213979999709409,
+  "diagnose": 8.836200004225248e-05,
+  "open_ticket": 0.005049471999882371,
+  "await_approval": 0.000620914000137418
+ },
+ "burn_rate": 123.57420323628962,
+ "diagnosis": {
+  "root_cause_service": "cartservice",
+  "fault_type": "dns_failure",
+  "confidence": 0.5,
+  "summary": "Likely dns_failure on cartservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks cartservice first"
+   },
+   {
+    "ref": "log:log-00284",
+    "claim": "cartservice: [quarantined: possible prompt injection]"
+   },
+   {
+    "ref": "log:log-00178",
+    "claim": "cartservice: name resolution failed for redis-cart"
+   },
+   {
+    "ref": "log:log-00179",
+    "claim": "cartservice: dial tcp: lookup redis-cart: no such host"
+   },
+   {
+    "ref": "rb:rb-dns_failure#symptoms",
+    "claim": "matching runbook: DNS resolution failure"
+   }
+  ],
+  "fix_steps": [
+   "Follow the matching runbook."
+  ],
+  "risk_level": "medium",
+  "proposed_actions": [
+   {
+    "kind": "rollout_restart",
+    "target": "cartservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "505deab10ed849248e0bf7b330195d87",
+  "number": "INC0010120",
+  "urgency": "1",
+  "impact": "1",
+  "affected_cis": 4
+ },
+ "time_to_ticket_s": 0.011138200759887695,
+ "proposed_actions": [
+  {
+   "kind": "rollout_restart",
+   "target": "cartservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "b03c63dfca2a673b"
+}

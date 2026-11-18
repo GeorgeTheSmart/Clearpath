@@ -1,0 +1,127 @@
+{
+ "t_det": 172,
+ "ranking": [
+  [
+   "adservice",
+   0.6037115538760174
+  ],
+  [
+   "frontend",
+   0.0560374271521558
+  ],
+  [
+   "emailservice",
+   0.05524447529857032
+  ],
+  [
+   "paymentservice",
+   0.04944147168861567
+  ],
+  [
+   "cartservice",
+   0.046150667202473517
+  ],
+  [
+   "productcatalogservice",
+   0.043462602560079694
+  ],
+  [
+   "redis-cart",
+   0.041142114366369775
+  ],
+  [
+   "shippingservice",
+   0.035464228602788986
+  ],
+  [
+   "currencyservice",
+   0.030564017509796336
+  ],
+  [
+   "recommendationservice",
+   0.026464568777880254
+  ],
+  [
+   "checkoutservice",
+   0.01231687296525237
+  ]
+ ],
+ "incident_id": "inc-10231",
+ "t_received": 1794992178.098766,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.000904296000044269,
+  "gather_context": 0.0030561399998987326,
+  "sanitize": 0.002968340999814245,
+  "retrieve": 0.001047253999786335,
+  "diagnose": 0.00011217300016141962,
+  "open_ticket": 0.01047144299991487,
+  "await_approval": 0.0008109410000542994
+ },
+ "burn_rate": 83.13392300618082,
+ "diagnosis": {
+  "root_cause_service": "adservice",
+  "fault_type": "bad_config",
+  "confidence": 0.5,
+  "summary": "Likely bad_config on adservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks adservice first"
+   },
+   {
+    "ref": "log:log-00207",
+    "claim": "adservice: failed to parse env var sku_42: invalid syntax"
+   },
+   {
+    "ref": "log:log-00210",
+    "claim": "adservice: failed to parse env var PRODUCT_ID: invalid syntax"
+   },
+   {
+    "ref": "log:log-00212",
+    "claim": "adservice: invalid configuration: missing required key sku_42"
+   },
+   {
+    "ref": "rb:rb-bad_config#diagnosis",
+    "claim": "matching runbook: Bad configuration or environment variable"
+   }
+  ],
+  "fix_steps": [
+   "Find the key named in 'invalid configuration', 'missing required key' or parse errors.",
+   "Mitigate: revert the ConfigMap and rollout restart, or roll back the deployment revision.",
+   "Follow up: validate config in CI and use a schema."
+  ],
+  "risk_level": "high",
+  "proposed_actions": [
+   {
+    "kind": "rollback",
+    "target": "adservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "a4e84f245a554e82b78d09734810ac2f",
+  "number": "INC0010232",
+  "urgency": "1",
+  "impact": "1",
+  "affected_cis": 2
+ },
+ "time_to_ticket_s": 0.01774311065673828,
+ "proposed_actions": [
+  {
+   "kind": "rollback",
+   "target": "adservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "3be48d16e5535b4b"
+}

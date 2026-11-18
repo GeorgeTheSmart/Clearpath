@@ -1,0 +1,127 @@
+{
+ "t_det": 133,
+ "ranking": [
+  [
+   "adservice",
+   0.4670349672129899
+  ],
+  [
+   "redis-cart",
+   0.09144911877508333
+  ],
+  [
+   "productcatalogservice",
+   0.08959985251689076
+  ],
+  [
+   "paymentservice",
+   0.05717508755401385
+  ],
+  [
+   "emailservice",
+   0.05638495468421924
+  ],
+  [
+   "shippingservice",
+   0.04888132484996209
+  ],
+  [
+   "currencyservice",
+   0.041640079900291754
+  ],
+  [
+   "frontend",
+   0.0412206385879617
+  ],
+  [
+   "cartservice",
+   0.04107331050455933
+  ],
+  [
+   "recommendationservice",
+   0.040687280227872574
+  ],
+  [
+   "checkoutservice",
+   0.02485338518615527
+  ]
+ ],
+ "incident_id": "inc-10004",
+ "t_received": 1794992172.8044157,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0005209089999880234,
+  "gather_context": 0.006613435999952344,
+  "sanitize": 0.0043136170002071594,
+  "retrieve": 0.0009617420000722632,
+  "diagnose": 0.000149578000218753,
+  "open_ticket": 0.003873991000091337,
+  "await_approval": 0.0005517280001186009
+ },
+ "burn_rate": 2.2087824551645765,
+ "diagnosis": {
+  "root_cause_service": "adservice",
+  "fault_type": "latency_injection",
+  "confidence": 0.5,
+  "summary": "Likely latency_injection on adservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks adservice first"
+   },
+   {
+    "ref": "log:log-00137",
+    "claim": "adservice: slow response from network peer"
+   },
+   {
+    "ref": "log:log-00141",
+    "claim": "adservice: slow response from network peer"
+   },
+   {
+    "ref": "log:log-00143",
+    "claim": "adservice: upstream request took 3637ms (p99 budget 200ms)"
+   },
+   {
+    "ref": "rb:rb-latency_injection#diagnosis",
+    "claim": "matching runbook: Network latency to a dependency"
+   }
+  ],
+  "fix_steps": [
+   "Check for network chaos, a noisy neighbour, or a degraded node (`kubectl describe node`).",
+   "Mitigate: move the pods (rollout restart onto other nodes) or fail over.",
+   "Follow up: set client timeouts below the upstream budget and add retries with jitter."
+  ],
+  "risk_level": "medium",
+  "proposed_actions": [
+   {
+    "kind": "rollout_restart",
+    "target": "adservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "eae1fff7e18a464d84b94e84b372d873",
+  "number": "INC0010005",
+  "urgency": "2",
+  "impact": "3",
+  "affected_cis": 2
+ },
+ "time_to_ticket_s": 0.01594376564025879,
+ "proposed_actions": [
+  {
+   "kind": "rollout_restart",
+   "target": "adservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "60575b954ade7789"
+}

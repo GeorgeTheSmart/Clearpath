@@ -1,0 +1,127 @@
+{
+ "t_det": 172,
+ "ranking": [
+  [
+   "cartservice",
+   0.42435374608883547
+  ],
+  [
+   "redis-cart",
+   0.12603637050732752
+  ],
+  [
+   "currencyservice",
+   0.07199363011232006
+  ],
+  [
+   "shippingservice",
+   0.06082691745144935
+  ],
+  [
+   "emailservice",
+   0.052610495797711154
+  ],
+  [
+   "adservice",
+   0.052103291074993896
+  ],
+  [
+   "productcatalogservice",
+   0.05202569143789018
+  ],
+  [
+   "paymentservice",
+   0.04767303805445314
+  ],
+  [
+   "recommendationservice",
+   0.044582883658410524
+  ],
+  [
+   "checkoutservice",
+   0.03551926718953593
+  ],
+  [
+   "frontend",
+   0.03227466862707277
+  ]
+ ],
+ "incident_id": "inc-10065",
+ "t_received": 1794992174.2639618,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0006798660001550161,
+  "gather_context": 0.0027839039998980297,
+  "sanitize": 0.0021763049999208306,
+  "retrieve": 0.0010660289999577799,
+  "diagnose": 0.00011369399999239249,
+  "open_ticket": 0.0057067570000981505,
+  "await_approval": 0.0005971350001345854
+ },
+ "burn_rate": 6.990179244638705,
+ "diagnosis": {
+  "root_cause_service": "cartservice",
+  "fault_type": "cpu_hog",
+  "confidence": 0.5,
+  "summary": "Likely cpu_hog on cartservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks cartservice first"
+   },
+   {
+    "ref": "log:log-00164",
+    "claim": "cartservice: request handling slow, worker pool saturated (144 queued)"
+   },
+   {
+    "ref": "log:log-00168",
+    "claim": "cartservice: event loop blocked for 3096ms"
+   },
+   {
+    "ref": "log:log-00169",
+    "claim": "cartservice: throttling detected: cfs_throttled_periods increased"
+   },
+   {
+    "ref": "rb:rb-cpu_hog#diagnosis",
+    "claim": "matching runbook: CPU saturation / CPU hog"
+   }
+  ],
+  "fix_steps": [
+   "Check for a hot loop or runaway job in recent logs (blocked event loop, worker pool saturated, handler deadline exceeded).",
+   "Mitigate: scale out the deployment (`scale` action) or roll back if a recent release introduced the hot path.",
+   "Follow up: profile (pprof / async-profiler) and set realistic CPU requests/limits."
+  ],
+  "risk_level": "medium",
+  "proposed_actions": [
+   {
+    "kind": "scale",
+    "target": "cartservice",
+    "replicas": 3
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "d807db2a4d044397aa938e3ce619cb3b",
+  "number": "INC0010066",
+  "urgency": "2",
+  "impact": "2",
+  "affected_cis": 4
+ },
+ "time_to_ticket_s": 0.011836767196655273,
+ "proposed_actions": [
+  {
+   "kind": "scale",
+   "target": "cartservice",
+   "replicas": 3
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "33b4e811f35e0aa2"
+}

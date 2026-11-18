@@ -1,0 +1,127 @@
+{
+ "t_det": 167,
+ "ranking": [
+  [
+   "cartservice",
+   0.4136826945765305
+  ],
+  [
+   "checkoutservice",
+   0.21578521440286297
+  ],
+  [
+   "frontend",
+   0.0838733992341386
+  ],
+  [
+   "redis-cart",
+   0.06118179309982941
+  ],
+  [
+   "productcatalogservice",
+   0.0451103909147843
+  ],
+  [
+   "recommendationservice",
+   0.04077533255678212
+  ],
+  [
+   "paymentservice",
+   0.03510665690368003
+  ],
+  [
+   "adservice",
+   0.033035840955276036
+  ],
+  [
+   "currencyservice",
+   0.026012674994362942
+  ],
+  [
+   "emailservice",
+   0.023761219747508257
+  ],
+  [
+   "shippingservice",
+   0.02167478261424461
+  ]
+ ],
+ "incident_id": "inc-10024",
+ "t_received": 1794992173.261809,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.000544832999821665,
+  "gather_context": 0.0027208249998693645,
+  "sanitize": 0.0019807769999715674,
+  "retrieve": 0.0010025629999290686,
+  "diagnose": 0.00010638000003382331,
+  "open_ticket": 0.005486199999722885,
+  "await_approval": 0.0005681159996129281
+ },
+ "burn_rate": 33.17853207589418,
+ "diagnosis": {
+  "root_cause_service": "cartservice",
+  "fault_type": "packet_loss",
+  "confidence": 0.5,
+  "summary": "Likely packet_loss on cartservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks cartservice first"
+   },
+   {
+    "ref": "log:log-00187",
+    "claim": "cartservice: tcp retransmission on outbound connection"
+   },
+   {
+    "ref": "log:log-00188",
+    "claim": "cartservice: tcp retransmission on outbound connection"
+   },
+   {
+    "ref": "log:log-00192",
+    "claim": "cartservice: tcp retransmission on outbound connection"
+   },
+   {
+    "ref": "rb:rb-packet_loss#diagnosis",
+    "claim": "matching runbook: Packet loss / connection resets"
+   }
+  ],
+  "fix_steps": [
+   "Check node network metrics (`node_netstat_Tcp_RetransSegs`) and CNI health.",
+   "Mitigate: reschedule the pods (rollout restart) away from the bad node.",
+   "Follow up: open a ticket with the network/platform team with the node name."
+  ],
+  "risk_level": "medium",
+  "proposed_actions": [
+   {
+    "kind": "rollout_restart",
+    "target": "cartservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "cd1cfaf3ddfa4823b3bea51ce1da6563",
+  "number": "INC0010025",
+  "urgency": "1",
+  "impact": "1",
+  "affected_cis": 4
+ },
+ "time_to_ticket_s": 0.011296510696411133,
+ "proposed_actions": [
+  {
+   "kind": "rollout_restart",
+   "target": "cartservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "1c2412d05eac0bcc"
+}

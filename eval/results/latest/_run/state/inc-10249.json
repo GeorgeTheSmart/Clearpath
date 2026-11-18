@@ -1,0 +1,125 @@
+{
+ "t_det": 128,
+ "ranking": [
+  [
+   "frontend",
+   0.3774872393085649
+  ],
+  [
+   "shippingservice",
+   0.1193073957962598
+  ],
+  [
+   "redis-cart",
+   0.09284558159298155
+  ],
+  [
+   "productcatalogservice",
+   0.08676541283779406
+  ],
+  [
+   "currencyservice",
+   0.060564929656193395
+  ],
+  [
+   "recommendationservice",
+   0.057749383977212285
+  ],
+  [
+   "adservice",
+   0.047267637487248326
+  ],
+  [
+   "paymentservice",
+   0.04399404106392738
+  ],
+  [
+   "emailservice",
+   0.04339114644081703
+  ],
+  [
+   "cartservice",
+   0.036135440313179654
+  ],
+  [
+   "checkoutservice",
+   0.03449179152582152
+  ]
+ ],
+ "incident_id": "inc-10249",
+ "t_received": 1794992178.4986494,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0007929289999992761,
+  "gather_context": 0.002488018999883934,
+  "sanitize": 0.0020972850002181076,
+  "retrieve": 0.0012007509999421018,
+  "diagnose": 0.00010092899992741877,
+  "open_ticket": 0.008229052999922715,
+  "await_approval": 0.0008534730000064883
+ },
+ "burn_rate": 3.9905003722608168,
+ "diagnosis": {
+  "root_cause_service": "frontend",
+  "fault_type": "memory_leak",
+  "confidence": 0.5,
+  "summary": "Likely memory_leak on frontend (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks frontend first"
+   },
+   {
+    "ref": "log:log-00140",
+    "claim": "frontend: allocation failure, retrying after full GC"
+   },
+   {
+    "ref": "log:log-00141",
+    "claim": "frontend: allocation failure, retrying after full GC"
+   },
+   {
+    "ref": "log:log-00143",
+    "claim": "frontend: allocation failure, retrying after full GC"
+   },
+   {
+    "ref": "rb:rb-memory_leak#symptoms",
+    "claim": "matching runbook: Memory leak leading to OOMKill"
+   }
+  ],
+  "fix_steps": [
+   "Follow the matching runbook."
+  ],
+  "risk_level": "medium",
+  "proposed_actions": [
+   {
+    "kind": "rollout_restart",
+    "target": "frontend",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "89e0c09fe8f942859388f925b42a7b42",
+  "number": "INC0010250",
+  "urgency": "2",
+  "impact": "3",
+  "affected_cis": 8
+ },
+ "time_to_ticket_s": 0.014091253280639648,
+ "proposed_actions": [
+  {
+   "kind": "rollout_restart",
+   "target": "frontend",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "d09e3398d154e7c6"
+}

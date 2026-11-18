@@ -1,0 +1,127 @@
+{
+ "t_det": 166,
+ "ranking": [
+  [
+   "currencyservice",
+   0.6333326718098484
+  ],
+  [
+   "checkoutservice",
+   0.11093348344854208
+  ],
+  [
+   "frontend",
+   0.06111071053090935
+  ],
+  [
+   "productcatalogservice",
+   0.03486922643219763
+  ],
+  [
+   "cartservice",
+   0.02710282443469751
+  ],
+  [
+   "redis-cart",
+   0.026704521670392514
+  ],
+  [
+   "paymentservice",
+   0.022861123025457786
+  ],
+  [
+   "emailservice",
+   0.022631063863828658
+  ],
+  [
+   "shippingservice",
+   0.02223298932794883
+  ],
+  [
+   "adservice",
+   0.0209669595532777
+  ],
+  [
+   "recommendationservice",
+   0.017254425902899294
+  ]
+ ],
+ "incident_id": "inc-10217",
+ "t_received": 1794992177.776669,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0007512410002163961,
+  "gather_context": 0.002694522000183497,
+  "sanitize": 0.0018870200001401827,
+  "retrieve": 0.0010253610003019276,
+  "diagnose": 9.953000017048907e-05,
+  "open_ticket": 0.00499287299999196,
+  "await_approval": 0.0008641300000817864
+ },
+ "burn_rate": 3.8830979275043034,
+ "diagnosis": {
+  "root_cause_service": "currencyservice",
+  "fault_type": "memory_leak",
+  "confidence": 0.5,
+  "summary": "Likely memory_leak on currencyservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks currencyservice first"
+   },
+   {
+    "ref": "log:log-00158",
+    "claim": "currencyservice: GC pause 3583ms, heap still growing"
+   },
+   {
+    "ref": "log:log-00164",
+    "claim": "currencyservice: allocation failure, retrying after full GC"
+   },
+   {
+    "ref": "log:log-00167",
+    "claim": "currencyservice: heap usage at 92% of limit"
+   },
+   {
+    "ref": "rb:rb-memory_leak#diagnosis",
+    "claim": "matching runbook: Memory leak leading to OOMKill"
+   }
+  ],
+  "fix_steps": [
+   "Look for long GC pauses, heap growth messages and allocation failures in logs.",
+   "Mitigate: rollout restart buys time; roll back if the growth started with a release.",
+   "Follow up: capture a heap profile before the next kill; raise the limit only as a stopgap."
+  ],
+  "risk_level": "medium",
+  "proposed_actions": [
+   {
+    "kind": "rollout_restart",
+    "target": "currencyservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "d360116476fc40dbb2d053550be93af2",
+  "number": "INC0010218",
+  "urgency": "2",
+  "impact": "3",
+  "affected_cis": 3
+ },
+ "time_to_ticket_s": 0.01070094108581543,
+ "proposed_actions": [
+  {
+   "kind": "rollout_restart",
+   "target": "currencyservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "2c946dc183e980f3"
+}

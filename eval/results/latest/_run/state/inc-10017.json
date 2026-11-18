@@ -1,0 +1,113 @@
+{
+ "t_det": 176,
+ "ranking": [
+  [
+   "productcatalogservice",
+   0.5778352415907939
+  ],
+  [
+   "recommendationservice",
+   0.20544579050952186
+  ],
+  [
+   "frontend",
+   0.06279040953949482
+  ],
+  [
+   "checkoutservice",
+   0.044888913155259294
+  ],
+  [
+   "currencyservice",
+   0.019222886304751496
+  ],
+  [
+   "redis-cart",
+   0.017903792999030155
+  ],
+  [
+   "adservice",
+   0.01740616492261795
+  ],
+  [
+   "shippingservice",
+   0.016188494064616376
+  ],
+  [
+   "emailservice",
+   0.014055723918830983
+  ],
+  [
+   "paymentservice",
+   0.013978585749285155
+  ],
+  [
+   "cartservice",
+   0.010283997245798059
+  ]
+ ],
+ "incident_id": "inc-10017",
+ "t_received": 1794992173.0834196,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0004823119998036418,
+  "gather_context": 0.0028449159999581752,
+  "sanitize": 0.0026539899999988847,
+  "retrieve": 0.0006496000000879576,
+  "diagnose": 7.625499983987538e-05,
+  "open_ticket": 0.0063426490000892954,
+  "await_approval": 0.000667284999963158
+ },
+ "burn_rate": 761.1952030782797,
+ "diagnosis": {
+  "root_cause_service": "productcatalogservice",
+  "fault_type": "crash_loop",
+  "confidence": 0.5,
+  "summary": "Likely crash_loop on productcatalogservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks productcatalogservice first"
+   },
+   {
+    "ref": "rb:rb-crash_loop#symptoms",
+    "claim": "matching runbook: Crash loop (CrashLoopBackOff)"
+   }
+  ],
+  "fix_steps": [
+   "Follow the matching runbook."
+  ],
+  "risk_level": "high",
+  "proposed_actions": [
+   {
+    "kind": "rollback",
+    "target": "productcatalogservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 2,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "55c3ae737fb34716a44d363c0bd77234",
+  "number": "INC0010018",
+  "urgency": "1",
+  "impact": "1",
+  "affected_cis": 4
+ },
+ "time_to_ticket_s": 0.012437820434570312,
+ "proposed_actions": [
+  {
+   "kind": "rollback",
+   "target": "productcatalogservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "33b26d52ebf5a338"
+}

@@ -1,0 +1,125 @@
+{
+ "t_det": 160,
+ "ranking": [
+  [
+   "adservice",
+   0.5289305632778206
+  ],
+  [
+   "frontend",
+   0.12372705868494259
+  ],
+  [
+   "shippingservice",
+   0.06423904860378553
+  ],
+  [
+   "productcatalogservice",
+   0.05362961577485088
+  ],
+  [
+   "recommendationservice",
+   0.04295599192985724
+  ],
+  [
+   "currencyservice",
+   0.04214360157876523
+  ],
+  [
+   "paymentservice",
+   0.04198487823768259
+  ],
+  [
+   "cartservice",
+   0.03658746375583548
+  ],
+  [
+   "emailservice",
+   0.02643654046370484
+  ],
+  [
+   "redis-cart",
+   0.024270130829459127
+  ],
+  [
+   "checkoutservice",
+   0.015095106863295956
+  ]
+ ],
+ "incident_id": "inc-10064",
+ "t_received": 1794992174.237349,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0006118770002103702,
+  "gather_context": 0.004421918999923946,
+  "sanitize": 0.004287329999897338,
+  "retrieve": 0.0012535750001916313,
+  "diagnose": 0.00012399800016282825,
+  "open_ticket": 0.00432710200038855,
+  "await_approval": 0.0006709230001433752
+ },
+ "burn_rate": 207.64361467066283,
+ "diagnosis": {
+  "root_cause_service": "adservice",
+  "fault_type": "crash_loop",
+  "confidence": 0.5,
+  "summary": "Likely crash_loop on adservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks adservice first"
+   },
+   {
+    "ref": "log:log-00140",
+    "claim": "adservice: process exited with code 2 during startup"
+   },
+   {
+    "ref": "log:log-00143",
+    "claim": "adservice: process exited with code 2 during startup"
+   },
+   {
+    "ref": "log:log-00146",
+    "claim": "adservice: back-off restarting failed container"
+   },
+   {
+    "ref": "rb:rb-crash_loop#symptoms",
+    "claim": "matching runbook: Crash loop (CrashLoopBackOff)"
+   }
+  ],
+  "fix_steps": [
+   "Follow the matching runbook."
+  ],
+  "risk_level": "high",
+  "proposed_actions": [
+   {
+    "kind": "rollback",
+    "target": "adservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "26fd0c159bf64bb9bef950f2293a82da",
+  "number": "INC0010065",
+  "urgency": "1",
+  "impact": "1",
+  "affected_cis": 2
+ },
+ "time_to_ticket_s": 0.014351844787597656,
+ "proposed_actions": [
+  {
+   "kind": "rollback",
+   "target": "adservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "575f51e23205e40b"
+}

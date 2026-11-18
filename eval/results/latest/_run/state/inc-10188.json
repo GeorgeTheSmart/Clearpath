@@ -1,0 +1,127 @@
+{
+ "t_det": 135,
+ "ranking": [
+  [
+   "redis-cart",
+   0.6215502895561257
+  ],
+  [
+   "cartservice",
+   0.08734422711463856
+  ],
+  [
+   "productcatalogservice",
+   0.05288306436005159
+  ],
+  [
+   "shippingservice",
+   0.0517995176770151
+  ],
+  [
+   "currencyservice",
+   0.03566012359215773
+  ],
+  [
+   "checkoutservice",
+   0.03359481882232064
+  ],
+  [
+   "adservice",
+   0.027034316635419036
+  ],
+  [
+   "paymentservice",
+   0.025968966324662064
+  ],
+  [
+   "frontend",
+   0.025655120860910773
+  ],
+  [
+   "emailservice",
+   0.024947505887154563
+  ],
+  [
+   "recommendationservice",
+   0.013562049169544451
+  ]
+ ],
+ "incident_id": "inc-10188",
+ "t_received": 1794992177.1324027,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0006767540003238537,
+  "gather_context": 0.002504471000065678,
+  "sanitize": 0.0012810719999833964,
+  "retrieve": 0.0008297129998027231,
+  "diagnose": 0.00010438099980092375,
+  "open_ticket": 0.005454386000110389,
+  "await_approval": 0.0010611669999889273
+ },
+ "burn_rate": 3.948844291900075,
+ "diagnosis": {
+  "root_cause_service": "redis-cart",
+  "fault_type": "latency_injection",
+  "confidence": 0.5,
+  "summary": "Likely latency_injection on redis-cart (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks redis-cart first"
+   },
+   {
+    "ref": "log:log-00120",
+    "claim": "redis-cart: request timeout after 3174ms"
+   },
+   {
+    "ref": "log:log-00123",
+    "claim": "redis-cart: upstream request took 4540ms (p99 budget 200ms)"
+   },
+   {
+    "ref": "log:log-00127",
+    "claim": "redis-cart: upstream request took 1794ms (p99 budget 200ms)"
+   },
+   {
+    "ref": "rb:rb-latency_injection#diagnosis",
+    "claim": "matching runbook: Network latency to a dependency"
+   }
+  ],
+  "fix_steps": [
+   "Check for network chaos, a noisy neighbour, or a degraded node (`kubectl describe node`).",
+   "Mitigate: move the pods (rollout restart onto other nodes) or fail over.",
+   "Follow up: set client timeouts below the upstream budget and add retries with jitter."
+  ],
+  "risk_level": "medium",
+  "proposed_actions": [
+   {
+    "kind": "rollout_restart",
+    "target": "redis-cart",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "10f8f7f5c8394b0292f6a4f059015ceb",
+  "number": "INC0010189",
+  "urgency": "2",
+  "impact": "3",
+  "affected_cis": 2
+ },
+ "time_to_ticket_s": 0.009917497634887695,
+ "proposed_actions": [
+  {
+   "kind": "rollout_restart",
+   "target": "redis-cart",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "e0bc8baa005435fe"
+}

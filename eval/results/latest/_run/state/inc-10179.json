@@ -1,0 +1,127 @@
+{
+ "t_det": 174,
+ "ranking": [
+  [
+   "checkoutservice",
+   0.3247247156871535
+  ],
+  [
+   "shippingservice",
+   0.10039623604363496
+  ],
+  [
+   "emailservice",
+   0.09819978489628395
+  ],
+  [
+   "productcatalogservice",
+   0.0901169941140339
+  ],
+  [
+   "adservice",
+   0.08531816295142854
+  ],
+  [
+   "redis-cart",
+   0.07247996304854185
+  ],
+  [
+   "currencyservice",
+   0.07193349375728315
+  ],
+  [
+   "paymentservice",
+   0.049266492670628624
+  ],
+  [
+   "cartservice",
+   0.04810856150858463
+  ],
+  [
+   "recommendationservice",
+   0.03670974011040106
+  ],
+  [
+   "frontend",
+   0.022745855212026014
+  ]
+ ],
+ "incident_id": "inc-10179",
+ "t_received": 1794992176.9205208,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0007149939997361798,
+  "gather_context": 0.0026128239996978664,
+  "sanitize": 0.0017761139997674036,
+  "retrieve": 0.0009568300001774332,
+  "diagnose": 0.00010032000000137486,
+  "open_ticket": 0.00921786599974439,
+  "await_approval": 0.0008291199997074727
+ },
+ "burn_rate": 4.785500305134514,
+ "diagnosis": {
+  "root_cause_service": "checkoutservice",
+  "fault_type": "memory_leak",
+  "confidence": 0.5,
+  "summary": "Likely memory_leak on checkoutservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks checkoutservice first"
+   },
+   {
+    "ref": "log:log-00157",
+    "claim": "checkoutservice: GC pause 655ms, heap still growing"
+   },
+   {
+    "ref": "log:log-00159",
+    "claim": "checkoutservice: heap usage at 95% of limit"
+   },
+   {
+    "ref": "log:log-00163",
+    "claim": "checkoutservice: GC pause 2197ms, heap still growing"
+   },
+   {
+    "ref": "rb:rb-memory_leak#diagnosis",
+    "claim": "matching runbook: Memory leak leading to OOMKill"
+   }
+  ],
+  "fix_steps": [
+   "Look for long GC pauses, heap growth messages and allocation failures in logs.",
+   "Mitigate: rollout restart buys time; roll back if the growth started with a release.",
+   "Follow up: capture a heap profile before the next kill; raise the limit only as a stopgap."
+  ],
+  "risk_level": "medium",
+  "proposed_actions": [
+   {
+    "kind": "rollout_restart",
+    "target": "checkoutservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "92095c6f049942519e096eb783ca00d9",
+  "number": "INC0010180",
+  "urgency": "2",
+  "impact": "3",
+  "affected_cis": 8
+ },
+ "time_to_ticket_s": 0.014596223831176758,
+ "proposed_actions": [
+  {
+   "kind": "rollout_restart",
+   "target": "checkoutservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "a3a415e1bea34d43"
+}

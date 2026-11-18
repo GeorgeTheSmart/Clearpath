@@ -1,0 +1,127 @@
+{
+ "t_det": 158,
+ "ranking": [
+  [
+   "currencyservice",
+   0.5643312305532568
+  ],
+  [
+   "checkoutservice",
+   0.10725381712887577
+  ],
+  [
+   "frontend",
+   0.06736803752424292
+  ],
+  [
+   "emailservice",
+   0.053022968086650905
+  ],
+  [
+   "productcatalogservice",
+   0.038848500230646385
+  ],
+  [
+   "adservice",
+   0.037477623957764813
+  ],
+  [
+   "paymentservice",
+   0.033173200427529234
+  ],
+  [
+   "shippingservice",
+   0.0319388490010819
+  ],
+  [
+   "redis-cart",
+   0.028188181952610632
+  ],
+  [
+   "recommendationservice",
+   0.020284385600764357
+  ],
+  [
+   "cartservice",
+   0.01811320553657625
+  ]
+ ],
+ "incident_id": "inc-10168",
+ "t_received": 1794992176.683936,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0007593279997308855,
+  "gather_context": 0.002744820999851072,
+  "sanitize": 0.002382929999839689,
+  "retrieve": 0.0009085570000024745,
+  "diagnose": 0.00010967599973810138,
+  "open_ticket": 0.0043753230002039345,
+  "await_approval": 0.0006676940001852927
+ },
+ "burn_rate": 146.35434346975507,
+ "diagnosis": {
+  "root_cause_service": "currencyservice",
+  "fault_type": "bad_deploy",
+  "confidence": 0.5,
+  "summary": "Likely bad_deploy on currencyservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks currencyservice first"
+   },
+   {
+    "ref": "log:log-00140",
+    "claim": "currencyservice: TypeError: cannot read property of undefined"
+   },
+   {
+    "ref": "log:log-00142",
+    "claim": "currencyservice: unhandled exception in handler: KeyError 'PRODUCT_ID'"
+   },
+   {
+    "ref": "log:log-00144",
+    "claim": "currencyservice: assertion failed in release v1.1"
+   },
+   {
+    "ref": "rb:rb-bad_deploy#diagnosis",
+    "claim": "matching runbook: Bad deploy (regression in a new release)"
+   }
+  ],
+  "fix_steps": [
+   "Check for new exception types (KeyError, TypeError, assertion failures) after the rollout.",
+   "Mitigate: roll back to the previous revision (`rollback` action).",
+   "Follow up: add a canary stage with automated analysis before full rollout."
+  ],
+  "risk_level": "high",
+  "proposed_actions": [
+   {
+    "kind": "rollback",
+    "target": "currencyservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "7b9669f7a6854c5eb67139e7897e4ef3",
+  "number": "INC0010169",
+  "urgency": "1",
+  "impact": "1",
+  "affected_cis": 3
+ },
+ "time_to_ticket_s": 0.010616064071655273,
+ "proposed_actions": [
+  {
+   "kind": "rollback",
+   "target": "currencyservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "a5afc782e2c02071"
+}

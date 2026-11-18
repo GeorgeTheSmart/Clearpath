@@ -1,0 +1,125 @@
+{
+ "t_det": 162,
+ "ranking": [
+  [
+   "checkoutservice",
+   0.39940484207916477
+  ],
+  [
+   "emailservice",
+   0.11863583645436668
+  ],
+  [
+   "productcatalogservice",
+   0.07790197913365687
+  ],
+  [
+   "paymentservice",
+   0.07006950170353572
+  ],
+  [
+   "redis-cart",
+   0.060992260549829126
+  ],
+  [
+   "currencyservice",
+   0.06007192939131898
+  ],
+  [
+   "adservice",
+   0.04831219036871505
+  ],
+  [
+   "shippingservice",
+   0.0472208659565229
+  ],
+  [
+   "recommendationservice",
+   0.04654048465437455
+  ],
+  [
+   "cartservice",
+   0.043936002193614945
+  ],
+  [
+   "frontend",
+   0.026914107514900306
+  ]
+ ],
+ "incident_id": "inc-10167",
+ "t_received": 1794992176.6604872,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0006860650000817259,
+  "gather_context": 0.0026129559996661555,
+  "sanitize": 0.001887623000129679,
+  "retrieve": 0.000950098999965121,
+  "diagnose": 9.503999990556622e-05,
+  "open_ticket": 0.007535366999945836,
+  "await_approval": 0.0006832540002505993
+ },
+ "burn_rate": 14.329455252456121,
+ "diagnosis": {
+  "root_cause_service": "checkoutservice",
+  "fault_type": "dns_failure",
+  "confidence": 0.5,
+  "summary": "Likely dns_failure on checkoutservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks checkoutservice first"
+   },
+   {
+    "ref": "log:log-00147",
+    "claim": "checkoutservice: name resolution failed for productcatalogservice"
+   },
+   {
+    "ref": "log:log-00149",
+    "claim": "checkoutservice: dns query timed out for productcatalogservice.default.svc.cluster.local"
+   },
+   {
+    "ref": "log:log-00150",
+    "claim": "checkoutservice: dial tcp: lookup paymentservice: no such host"
+   },
+   {
+    "ref": "rb:rb-dns_failure#symptoms",
+    "claim": "matching runbook: DNS resolution failure"
+   }
+  ],
+  "fix_steps": [
+   "Follow the matching runbook."
+  ],
+  "risk_level": "medium",
+  "proposed_actions": [
+   {
+    "kind": "rollout_restart",
+    "target": "checkoutservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "f8c895fe7f0146e7b5327c3b517e7900",
+  "number": "INC0010168",
+  "urgency": "2",
+  "impact": "2",
+  "affected_cis": 8
+ },
+ "time_to_ticket_s": 0.013090133666992188,
+ "proposed_actions": [
+  {
+   "kind": "rollout_restart",
+   "target": "checkoutservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "df0181c9e5aafe02"
+}

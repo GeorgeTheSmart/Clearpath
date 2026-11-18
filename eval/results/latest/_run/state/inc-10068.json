@@ -1,0 +1,127 @@
+{
+ "t_det": 137,
+ "ranking": [
+  [
+   "recommendationservice",
+   0.6659578071171042
+  ],
+  [
+   "frontend",
+   0.10798736337498849
+  ],
+  [
+   "productcatalogservice",
+   0.03908273160951489
+  ],
+  [
+   "currencyservice",
+   0.031516587727770475
+  ],
+  [
+   "shippingservice",
+   0.03086724031226424
+  ],
+  [
+   "redis-cart",
+   0.027243440618019265
+  ],
+  [
+   "cartservice",
+   0.02122491300561674
+  ],
+  [
+   "adservice",
+   0.0209542311007299
+  ],
+  [
+   "paymentservice",
+   0.020473465480130775
+  ],
+  [
+   "emailservice",
+   0.020169363086686154
+  ],
+  [
+   "checkoutservice",
+   0.01452285656717475
+  ]
+ ],
+ "incident_id": "inc-10068",
+ "t_received": 1794992174.3297393,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0007383500001196808,
+  "gather_context": 0.002647363000050973,
+  "sanitize": 0.0014946619999136601,
+  "retrieve": 0.0009007610001390276,
+  "diagnose": 9.176300000035553e-05,
+  "open_ticket": 0.004399680000005901,
+  "await_approval": 0.000604010000188282
+ },
+ "burn_rate": 306.79401796497035,
+ "diagnosis": {
+  "root_cause_service": "recommendationservice",
+  "fault_type": "dns_failure",
+  "confidence": 0.5,
+  "summary": "Likely dns_failure on recommendationservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks recommendationservice first"
+   },
+   {
+    "ref": "log:log-00148",
+    "claim": "recommendationservice: name resolution failed for productcatalogservice"
+   },
+   {
+    "ref": "log:log-00149",
+    "claim": "recommendationservice: dns query timed out for productcatalogservice.default.svc.cluster.local"
+   },
+   {
+    "ref": "log:log-00154",
+    "claim": "recommendationservice: dial tcp: lookup productcatalogservice: no such host"
+   },
+   {
+    "ref": "rb:rb-dns_failure#diagnosis",
+    "claim": "matching runbook: DNS resolution failure"
+   }
+  ],
+  "fix_steps": [
+   "Check CoreDNS pods and the failing pod's /etc/resolv.conf and dnsPolicy.",
+   "Mitigate: rollout restart the affected service; restart CoreDNS if it is unhealthy.",
+   "Follow up: add DNS caching (NodeLocal DNSCache) and alert on CoreDNS errors."
+  ],
+  "risk_level": "medium",
+  "proposed_actions": [
+   {
+    "kind": "rollout_restart",
+    "target": "recommendationservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "7d01c621f28c4398b5f6afa903e224a9",
+  "number": "INC0010069",
+  "urgency": "1",
+  "impact": "1",
+  "affected_cis": 3
+ },
+ "time_to_ticket_s": 0.009745597839355469,
+ "proposed_actions": [
+  {
+   "kind": "rollout_restart",
+   "target": "recommendationservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "9ab772248a0a5b78"
+}

@@ -1,0 +1,127 @@
+{
+ "t_det": 141,
+ "ranking": [
+  [
+   "frontend",
+   0.2789777423434367
+  ],
+  [
+   "adservice",
+   0.13419690366534928
+  ],
+  [
+   "cartservice",
+   0.08713470844900609
+  ],
+  [
+   "productcatalogservice",
+   0.08548303667054008
+  ],
+  [
+   "currencyservice",
+   0.07313546273975446
+  ],
+  [
+   "shippingservice",
+   0.07122710661309473
+  ],
+  [
+   "paymentservice",
+   0.0675136866678597
+  ],
+  [
+   "redis-cart",
+   0.06500082056390337
+  ],
+  [
+   "emailservice",
+   0.06375835787651415
+  ],
+  [
+   "recommendationservice",
+   0.049027559293147296
+  ],
+  [
+   "checkoutservice",
+   0.02454461511739401
+  ]
+ ],
+ "incident_id": "inc-10255",
+ "t_received": 1794992178.6248703,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0008554500000172993,
+  "gather_context": 0.0027288559999760764,
+  "sanitize": 0.0014679890000479645,
+  "retrieve": 0.000946363999901223,
+  "diagnose": 0.0001053890000548563,
+  "open_ticket": 0.007864833999974508,
+  "await_approval": 0.0008690750000823755
+ },
+ "burn_rate": 17.93888644766312,
+ "diagnosis": {
+  "root_cause_service": "frontend",
+  "fault_type": "cpu_hog",
+  "confidence": 0.5,
+  "summary": "Likely cpu_hog on frontend (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks frontend first"
+   },
+   {
+    "ref": "log:log-00141",
+    "claim": "frontend: throttling detected: cfs_throttled_periods increased"
+   },
+   {
+    "ref": "log:log-00146",
+    "claim": "frontend: event loop blocked for 4838ms"
+   },
+   {
+    "ref": "log:log-00150",
+    "claim": "frontend: event loop blocked for 2177ms"
+   },
+   {
+    "ref": "rb:rb-cpu_hog#diagnosis",
+    "claim": "matching runbook: CPU saturation / CPU hog"
+   }
+  ],
+  "fix_steps": [
+   "Check for a hot loop or runaway job in recent logs (blocked event loop, worker pool saturated, handler deadline exceeded).",
+   "Mitigate: scale out the deployment (`scale` action) or roll back if a recent release introduced the hot path.",
+   "Follow up: profile (pprof / async-profiler) and set realistic CPU requests/limits."
+  ],
+  "risk_level": "medium",
+  "proposed_actions": [
+   {
+    "kind": "scale",
+    "target": "frontend",
+    "replicas": 3
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "7bd7779f28454638ad5b5bd97ef76561",
+  "number": "INC0010256",
+  "urgency": "1",
+  "impact": "1",
+  "affected_cis": 8
+ },
+ "time_to_ticket_s": 0.013190031051635742,
+ "proposed_actions": [
+  {
+   "kind": "scale",
+   "target": "frontend",
+   "replicas": 3
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "7672269701683195"
+}

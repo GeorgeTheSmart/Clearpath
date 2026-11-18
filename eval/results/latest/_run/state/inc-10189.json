@@ -1,0 +1,125 @@
+{
+ "t_det": 127,
+ "ranking": [
+  [
+   "recommendationservice",
+   0.5752417916756382
+  ],
+  [
+   "frontend",
+   0.07963037279680414
+  ],
+  [
+   "paymentservice",
+   0.05728834141193444
+  ],
+  [
+   "productcatalogservice",
+   0.04907483042628947
+  ],
+  [
+   "emailservice",
+   0.041756260076900496
+  ],
+  [
+   "adservice",
+   0.04096051649105346
+  ],
+  [
+   "redis-cart",
+   0.04043317153996759
+  ],
+  [
+   "shippingservice",
+   0.038210438570569535
+  ],
+  [
+   "currencyservice",
+   0.03371805758345238
+  ],
+  [
+   "cartservice",
+   0.02769614666291772
+  ],
+  [
+   "checkoutservice",
+   0.01599007276447275
+  ]
+ ],
+ "incident_id": "inc-10189",
+ "t_received": 1794992177.154735,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0012620759998753783,
+  "gather_context": 0.0039894860001368215,
+  "sanitize": 0.004132225999910588,
+  "retrieve": 0.001561719000164885,
+  "diagnose": 0.0001289699998778815,
+  "open_ticket": 0.006247569999686675,
+  "await_approval": 0.0012138789998061839
+ },
+ "burn_rate": 164.36466035281438,
+ "diagnosis": {
+  "root_cause_service": "recommendationservice",
+  "fault_type": "crash_loop",
+  "confidence": 0.5,
+  "summary": "Likely crash_loop on recommendationservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks recommendationservice first"
+   },
+   {
+    "ref": "log:log-00127",
+    "claim": "recommendationservice: panic: runtime error: invalid memory address or nil pointer dereference"
+   },
+   {
+    "ref": "log:log-00133",
+    "claim": "recommendationservice: process exited with code 2 during startup"
+   },
+   {
+    "ref": "log:log-00141",
+    "claim": "recommendationservice: fatal error: initialisation failed, exiting"
+   },
+   {
+    "ref": "rb:rb-crash_loop#symptoms",
+    "claim": "matching runbook: Crash loop (CrashLoopBackOff)"
+   }
+  ],
+  "fix_steps": [
+   "Follow the matching runbook."
+  ],
+  "risk_level": "high",
+  "proposed_actions": [
+   {
+    "kind": "rollback",
+    "target": "recommendationservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "686476b3e2d8458f8b98acb1314b4378",
+  "number": "INC0010190",
+  "urgency": "1",
+  "impact": "1",
+  "affected_cis": 3
+ },
+ "time_to_ticket_s": 0.0162050724029541,
+ "proposed_actions": [
+  {
+   "kind": "rollback",
+   "target": "recommendationservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "b7dbaf089b1c755c"
+}

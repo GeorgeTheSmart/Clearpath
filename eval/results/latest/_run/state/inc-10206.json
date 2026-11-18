@@ -1,0 +1,127 @@
+{
+ "t_det": 134,
+ "ranking": [
+  [
+   "productcatalogservice",
+   0.6383948983125559
+  ],
+  [
+   "checkoutservice",
+   0.09061649301543159
+  ],
+  [
+   "frontend",
+   0.0792770455849975
+  ],
+  [
+   "recommendationservice",
+   0.054871289179415965
+  ],
+  [
+   "cartservice",
+   0.03023455239534442
+  ],
+  [
+   "emailservice",
+   0.02369039131226093
+  ],
+  [
+   "paymentservice",
+   0.021002078892669564
+  ],
+  [
+   "currencyservice",
+   0.01777428941104274
+  ],
+  [
+   "redis-cart",
+   0.016543769971150722
+  ],
+  [
+   "shippingservice",
+   0.015377790561918025
+  ],
+  [
+   "adservice",
+   0.012217401363212574
+  ]
+ ],
+ "incident_id": "inc-10206",
+ "t_received": 1794992177.5426505,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0008000059997357312,
+  "gather_context": 0.0030300190001071314,
+  "sanitize": 0.005347411000002467,
+  "retrieve": 0.0014102780000939674,
+  "diagnose": 0.0001258540000890207,
+  "open_ticket": 0.0058166479998362774,
+  "await_approval": 0.0007819630000085454
+ },
+ "burn_rate": 427.45580893235626,
+ "diagnosis": {
+  "root_cause_service": "productcatalogservice",
+  "fault_type": "bad_config",
+  "confidence": 0.5,
+  "summary": "Likely bad_config on productcatalogservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks productcatalogservice first"
+   },
+   {
+    "ref": "log:log-00138",
+    "claim": "productcatalogservice: config validation error: REDIS_ADDR must be set"
+   },
+   {
+    "ref": "log:log-00140",
+    "claim": "productcatalogservice: invalid configuration: missing required key REDIS_ADDR"
+   },
+   {
+    "ref": "log:log-00143",
+    "claim": "productcatalogservice: config validation error: REDIS_ADDR must be set"
+   },
+   {
+    "ref": "rb:rb-bad_config#diagnosis",
+    "claim": "matching runbook: Bad configuration or environment variable"
+   }
+  ],
+  "fix_steps": [
+   "Find the key named in 'invalid configuration', 'missing required key' or parse errors.",
+   "Mitigate: revert the ConfigMap and rollout restart, or roll back the deployment revision.",
+   "Follow up: validate config in CI and use a schema."
+  ],
+  "risk_level": "high",
+  "proposed_actions": [
+   {
+    "kind": "rollback",
+    "target": "productcatalogservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "9e5c943ed5204f7cbf202f7593e70bb5",
+  "number": "INC0010207",
+  "urgency": "1",
+  "impact": "1",
+  "affected_cis": 4
+ },
+ "time_to_ticket_s": 0.015782833099365234,
+ "proposed_actions": [
+  {
+   "kind": "rollback",
+   "target": "productcatalogservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "588d20edd9f29e85"
+}

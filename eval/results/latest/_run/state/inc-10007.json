@@ -1,0 +1,125 @@
+{
+ "t_det": 165,
+ "ranking": [
+  [
+   "recommendationservice",
+   0.4744237114261489
+  ],
+  [
+   "productcatalogservice",
+   0.08491073355572698
+  ],
+  [
+   "cartservice",
+   0.06950760916098708
+  ],
+  [
+   "currencyservice",
+   0.06700793661173579
+  ],
+  [
+   "adservice",
+   0.06271759308081423
+  ],
+  [
+   "shippingservice",
+   0.05823399914650288
+  ],
+  [
+   "redis-cart",
+   0.057532333257796886
+  ],
+  [
+   "emailservice",
+   0.04280324297533825
+  ],
+  [
+   "paymentservice",
+   0.03359260070784971
+  ],
+  [
+   "checkoutservice",
+   0.027258240974273797
+  ],
+  [
+   "frontend",
+   0.022011999102825374
+  ]
+ ],
+ "incident_id": "inc-10007",
+ "t_received": 1794992172.8667917,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0005534259998967173,
+  "gather_context": 0.00263534499981688,
+  "sanitize": 0.0017078780001611449,
+  "retrieve": 0.0009656980000727344,
+  "diagnose": 9.3513999672723e-05,
+  "open_ticket": 0.004976778000127524,
+  "await_approval": 0.000808286999927077
+ },
+ "burn_rate": 3.875939873286756,
+ "diagnosis": {
+  "root_cause_service": "recommendationservice",
+  "fault_type": "memory_leak",
+  "confidence": 0.5,
+  "summary": "Likely memory_leak on recommendationservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks recommendationservice first"
+   },
+   {
+    "ref": "log:log-00176",
+    "claim": "recommendationservice: heap usage at 88% of limit"
+   },
+   {
+    "ref": "log:log-00182",
+    "claim": "recommendationservice: container restarted: OOMKilled (exit code 137)"
+   },
+   {
+    "ref": "log:log-00184",
+    "claim": "recommendationservice: GC pause 4229ms, heap still growing"
+   },
+   {
+    "ref": "rb:rb-memory_leak#symptoms",
+    "claim": "matching runbook: Memory leak leading to OOMKill"
+   }
+  ],
+  "fix_steps": [
+   "Follow the matching runbook."
+  ],
+  "risk_level": "medium",
+  "proposed_actions": [
+   {
+    "kind": "rollout_restart",
+    "target": "recommendationservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "b88bd7888126465d80eca64c6049c615",
+  "number": "INC0010008",
+  "urgency": "2",
+  "impact": "3",
+  "affected_cis": 3
+ },
+ "time_to_ticket_s": 0.010397672653198242,
+ "proposed_actions": [
+  {
+   "kind": "rollout_restart",
+   "target": "recommendationservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "e33ef93c3c677c6f"
+}

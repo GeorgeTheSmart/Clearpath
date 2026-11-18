@@ -1,0 +1,127 @@
+{
+ "t_det": 174,
+ "ranking": [
+  [
+   "shippingservice",
+   0.6956278969876875
+  ],
+  [
+   "frontend",
+   0.09049846214542294
+  ],
+  [
+   "checkoutservice",
+   0.05319402308269297
+  ],
+  [
+   "paymentservice",
+   0.03022179184851606
+  ],
+  [
+   "productcatalogservice",
+   0.023460518096914705
+  ],
+  [
+   "adservice",
+   0.022477525020211976
+  ],
+  [
+   "currencyservice",
+   0.020529084603904655
+  ],
+  [
+   "emailservice",
+   0.019239444083196385
+  ],
+  [
+   "redis-cart",
+   0.018448758610733446
+  ],
+  [
+   "cartservice",
+   0.014746368742707685
+  ],
+  [
+   "recommendationservice",
+   0.011556126778011905
+  ]
+ ],
+ "incident_id": "inc-10097",
+ "t_received": 1794992174.9392345,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0006320460001916217,
+  "gather_context": 0.002775584999653802,
+  "sanitize": 0.003180205999797181,
+  "retrieve": 0.0008860059997459757,
+  "diagnose": 9.800099996937206e-05,
+  "open_ticket": 0.006008056000155193,
+  "await_approval": 0.0009782239999367448
+ },
+ "burn_rate": 74.8648496386369,
+ "diagnosis": {
+  "root_cause_service": "shippingservice",
+  "fault_type": "bad_config",
+  "confidence": 0.5,
+  "summary": "Likely bad_config on shippingservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks shippingservice first"
+   },
+   {
+    "ref": "log:log-00135",
+    "claim": "shippingservice: invalid configuration: missing required key CURRENCY_URL"
+   },
+   {
+    "ref": "log:log-00139",
+    "claim": "shippingservice: config validation error: CURRENCY_URL must be set"
+   },
+   {
+    "ref": "log:log-00147",
+    "claim": "shippingservice: failed to parse env var sku_42: invalid syntax"
+   },
+   {
+    "ref": "rb:rb-bad_config#diagnosis",
+    "claim": "matching runbook: Bad configuration or environment variable"
+   }
+  ],
+  "fix_steps": [
+   "Find the key named in 'invalid configuration', 'missing required key' or parse errors.",
+   "Mitigate: revert the ConfigMap and rollout restart, or roll back the deployment revision.",
+   "Follow up: validate config in CI and use a schema."
+  ],
+  "risk_level": "high",
+  "proposed_actions": [
+   {
+    "kind": "rollback",
+    "target": "shippingservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "777a5550a85b47b7bd123d3c36700f84",
+  "number": "INC0010098",
+  "urgency": "1",
+  "impact": "1",
+  "affected_cis": 3
+ },
+ "time_to_ticket_s": 0.012575864791870117,
+ "proposed_actions": [
+  {
+   "kind": "rollback",
+   "target": "shippingservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "b9ed0e9a61c759b2"
+}

@@ -1,0 +1,127 @@
+{
+ "t_det": 150,
+ "ranking": [
+  [
+   "adservice",
+   0.4757999420815791
+  ],
+  [
+   "frontend",
+   0.08276371799864679
+  ],
+  [
+   "redis-cart",
+   0.0697343106425457
+  ],
+  [
+   "shippingservice",
+   0.06617074167244501
+  ],
+  [
+   "currencyservice",
+   0.06490502190315452
+  ],
+  [
+   "productcatalogservice",
+   0.06412263227998141
+  ],
+  [
+   "paymentservice",
+   0.05239728938730434
+  ],
+  [
+   "emailservice",
+   0.044248406793116965
+  ],
+  [
+   "recommendationservice",
+   0.0381851379515043
+  ],
+  [
+   "cartservice",
+   0.028089549439902668
+  ],
+  [
+   "checkoutservice",
+   0.013583249849819377
+  ]
+ ],
+ "incident_id": "inc-10026",
+ "t_received": 1794992173.3057852,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0005584250002357294,
+  "gather_context": 0.0028142330002083327,
+  "sanitize": 0.0020120440003665863,
+  "retrieve": 0.0009333640000477317,
+  "diagnose": 0.00013559499984694412,
+  "open_ticket": 0.004692366000199399,
+  "await_approval": 0.0005791399998997804
+ },
+ "burn_rate": 111.52064487020793,
+ "diagnosis": {
+  "root_cause_service": "adservice",
+  "fault_type": "bad_config",
+  "confidence": 0.5,
+  "summary": "Likely bad_config on adservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks adservice first"
+   },
+   {
+    "ref": "log:log-00147",
+    "claim": "adservice: failed to parse env var sku_42: invalid syntax"
+   },
+   {
+    "ref": "log:log-00153",
+    "claim": "adservice: failed to parse env var PORT: invalid syntax"
+   },
+   {
+    "ref": "log:log-00155",
+    "claim": "adservice: invalid configuration: missing required key CURRENCY_URL"
+   },
+   {
+    "ref": "rb:rb-bad_config#diagnosis",
+    "claim": "matching runbook: Bad configuration or environment variable"
+   }
+  ],
+  "fix_steps": [
+   "Find the key named in 'invalid configuration', 'missing required key' or parse errors.",
+   "Mitigate: revert the ConfigMap and rollout restart, or roll back the deployment revision.",
+   "Follow up: validate config in CI and use a schema."
+  ],
+  "risk_level": "high",
+  "proposed_actions": [
+   {
+    "kind": "rollback",
+    "target": "adservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "088656a3a164452f8acb1b7981b7f394",
+  "number": "INC0010027",
+  "urgency": "1",
+  "impact": "1",
+  "affected_cis": 2
+ },
+ "time_to_ticket_s": 0.010637760162353516,
+ "proposed_actions": [
+  {
+   "kind": "rollback",
+   "target": "adservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "2f9ac06ebfdea4a4"
+}

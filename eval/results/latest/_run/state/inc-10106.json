@@ -1,0 +1,127 @@
+{
+ "t_det": 134,
+ "ranking": [
+  [
+   "shippingservice",
+   0.4022071222445496
+  ],
+  [
+   "productcatalogservice",
+   0.10984637625507349
+  ],
+  [
+   "currencyservice",
+   0.07291729450992136
+  ],
+  [
+   "adservice",
+   0.06483219424587353
+  ],
+  [
+   "cartservice",
+   0.06137598173069982
+  ],
+  [
+   "checkoutservice",
+   0.054786874099006205
+  ],
+  [
+   "paymentservice",
+   0.052032553689522656
+  ],
+  [
+   "recommendationservice",
+   0.050728393393609274
+  ],
+  [
+   "redis-cart",
+   0.04901606253995015
+  ],
+  [
+   "emailservice",
+   0.04588617579839081
+  ],
+  [
+   "frontend",
+   0.03637097149340309
+  ]
+ ],
+ "incident_id": "inc-10106",
+ "t_received": 1794992175.17261,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0007514750000154891,
+  "gather_context": 0.005401959999744577,
+  "sanitize": 0.0014735989998371224,
+  "retrieve": 0.0008728960001462838,
+  "diagnose": 0.00012620799998330767,
+  "open_ticket": 0.004470365999623027,
+  "await_approval": 0.0006201559999681194
+ },
+ "burn_rate": 5.345577799107469,
+ "diagnosis": {
+  "root_cause_service": "shippingservice",
+  "fault_type": "latency_injection",
+  "confidence": 0.5,
+  "summary": "Likely latency_injection on shippingservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks shippingservice first"
+   },
+   {
+    "ref": "log:log-00139",
+    "claim": "shippingservice: upstream request took 3628ms (p99 budget 200ms)"
+   },
+   {
+    "ref": "log:log-00141",
+    "claim": "shippingservice: upstream request took 907ms (p99 budget 200ms)"
+   },
+   {
+    "ref": "log:log-00146",
+    "claim": "shippingservice: upstream request took 1775ms (p99 budget 200ms)"
+   },
+   {
+    "ref": "rb:rb-latency_injection#diagnosis",
+    "claim": "matching runbook: Network latency to a dependency"
+   }
+  ],
+  "fix_steps": [
+   "Check for network chaos, a noisy neighbour, or a degraded node (`kubectl describe node`).",
+   "Mitigate: move the pods (rollout restart onto other nodes) or fail over.",
+   "Follow up: set client timeouts below the upstream budget and add retries with jitter."
+  ],
+  "risk_level": "medium",
+  "proposed_actions": [
+   {
+    "kind": "rollout_restart",
+    "target": "shippingservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "1d752682644b40b78a15428c9335ad19",
+  "number": "INC0010107",
+  "urgency": "2",
+  "impact": "3",
+  "affected_cis": 3
+ },
+ "time_to_ticket_s": 0.012487411499023438,
+ "proposed_actions": [
+  {
+   "kind": "rollout_restart",
+   "target": "shippingservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "9c681409fbac1cdc"
+}

@@ -1,0 +1,127 @@
+{
+ "t_det": 149,
+ "ranking": [
+  [
+   "recommendationservice",
+   0.267762113831938
+  ],
+  [
+   "productcatalogservice",
+   0.1957743038043289
+  ],
+  [
+   "currencyservice",
+   0.09917359267502227
+  ],
+  [
+   "redis-cart",
+   0.08412235182719542
+  ],
+  [
+   "emailservice",
+   0.06159865689046951
+  ],
+  [
+   "paymentservice",
+   0.06092775611816865
+  ],
+  [
+   "adservice",
+   0.05921530467846156
+  ],
+  [
+   "shippingservice",
+   0.05718931342891282
+  ],
+  [
+   "frontend",
+   0.047414913935900665
+  ],
+  [
+   "cartservice",
+   0.033746681147372205
+  ],
+  [
+   "checkoutservice",
+   0.03307501166223017
+  ]
+ ],
+ "incident_id": "inc-10291",
+ "t_received": 1794992179.4608443,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0009329979998256022,
+  "gather_context": 0.002894957000080467,
+  "sanitize": 0.0019633829997474095,
+  "retrieve": 0.001032567000038398,
+  "diagnose": 0.0001093299997592112,
+  "open_ticket": 0.005247843000233843,
+  "await_approval": 0.0008778789997450076
+ },
+ "burn_rate": 11.81445298708691,
+ "diagnosis": {
+  "root_cause_service": "recommendationservice",
+  "fault_type": "cpu_hog",
+  "confidence": 0.5,
+  "summary": "Likely cpu_hog on recommendationservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks recommendationservice first"
+   },
+   {
+    "ref": "log:log-00146",
+    "claim": "recommendationservice: handler exceeded deadline while waiting for worker thread"
+   },
+   {
+    "ref": "log:log-00149",
+    "claim": "recommendationservice: throttling detected: cfs_throttled_periods increased"
+   },
+   {
+    "ref": "log:log-00151",
+    "claim": "recommendationservice: handler exceeded deadline while waiting for worker thread"
+   },
+   {
+    "ref": "rb:rb-cpu_hog#diagnosis",
+    "claim": "matching runbook: CPU saturation / CPU hog"
+   }
+  ],
+  "fix_steps": [
+   "Check for a hot loop or runaway job in recent logs (blocked event loop, worker pool saturated, handler deadline exceeded).",
+   "Mitigate: scale out the deployment (`scale` action) or roll back if a recent release introduced the hot path.",
+   "Follow up: profile (pprof / async-profiler) and set realistic CPU requests/limits."
+  ],
+  "risk_level": "medium",
+  "proposed_actions": [
+   {
+    "kind": "scale",
+    "target": "recommendationservice",
+    "replicas": 3
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "f6fa3591a86a4eb296bbde9f796989fe",
+  "number": "INC0010292",
+  "urgency": "2",
+  "impact": "2",
+  "affected_cis": 3
+ },
+ "time_to_ticket_s": 0.011337041854858398,
+ "proposed_actions": [
+  {
+   "kind": "scale",
+   "target": "recommendationservice",
+   "replicas": 3
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "1f949dfcbc91fee6"
+}

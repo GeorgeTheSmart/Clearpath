@@ -1,0 +1,125 @@
+{
+ "t_det": 152,
+ "ranking": [
+  [
+   "frontend",
+   0.36043606864722766
+  ],
+  [
+   "adservice",
+   0.0994503110754513
+  ],
+  [
+   "productcatalogservice",
+   0.09559328100150899
+  ],
+  [
+   "emailservice",
+   0.0737329562530537
+  ],
+  [
+   "redis-cart",
+   0.0674397353202314
+  ],
+  [
+   "shippingservice",
+   0.06534442021617076
+  ],
+  [
+   "paymentservice",
+   0.06360085306055312
+  ],
+  [
+   "recommendationservice",
+   0.0593674239289248
+  ],
+  [
+   "currencyservice",
+   0.058497238526229026
+  ],
+  [
+   "cartservice",
+   0.042572964450850306
+  ],
+  [
+   "checkoutservice",
+   0.013964747519798822
+  ]
+ ],
+ "incident_id": "inc-10136",
+ "t_received": 1794992175.9754908,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0010720450000007986,
+  "gather_context": 0.0039932509998834576,
+  "sanitize": 0.0025215410000782867,
+  "retrieve": 0.0013457149998430395,
+  "diagnose": 0.00012531900028989185,
+  "open_ticket": 0.008384620000015275,
+  "await_approval": 0.0006501319999188127
+ },
+ "burn_rate": 231.8864794797176,
+ "diagnosis": {
+  "root_cause_service": "frontend",
+  "fault_type": "dns_failure",
+  "confidence": 0.5,
+  "summary": "Likely dns_failure on frontend (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks frontend first"
+   },
+   {
+    "ref": "log:log-00129",
+    "claim": "frontend: dial tcp: lookup productcatalogservice: no such host"
+   },
+   {
+    "ref": "log:log-00134",
+    "claim": "frontend: dns query timed out for recommendationservice.default.svc.cluster.local"
+   },
+   {
+    "ref": "log:log-00140",
+    "claim": "frontend: name resolution failed for cartservice"
+   },
+   {
+    "ref": "rb:rb-dns_failure#symptoms",
+    "claim": "matching runbook: DNS resolution failure"
+   }
+  ],
+  "fix_steps": [
+   "Follow the matching runbook."
+  ],
+  "risk_level": "medium",
+  "proposed_actions": [
+   {
+    "kind": "rollout_restart",
+    "target": "frontend",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "3c7c674e47a748059549f665156183eb",
+  "number": "INC0010137",
+  "urgency": "1",
+  "impact": "1",
+  "affected_cis": 8
+ },
+ "time_to_ticket_s": 0.01669478416442871,
+ "proposed_actions": [
+  {
+   "kind": "rollout_restart",
+   "target": "frontend",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "988fb4479816f97a"
+}

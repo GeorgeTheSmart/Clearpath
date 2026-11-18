@@ -1,0 +1,127 @@
+{
+ "t_det": 137,
+ "ranking": [
+  [
+   "cartservice",
+   0.6412304311076402
+  ],
+  [
+   "redis-cart",
+   0.0647780014726167
+  ],
+  [
+   "checkoutservice",
+   0.052483493255413315
+  ],
+  [
+   "frontend",
+   0.04036334054743825
+  ],
+  [
+   "emailservice",
+   0.036828243599310216
+  ],
+  [
+   "productcatalogservice",
+   0.034703835982725306
+  ],
+  [
+   "shippingservice",
+   0.03134204811819554
+  ],
+  [
+   "paymentservice",
+   0.029491341789546686
+  ],
+  [
+   "adservice",
+   0.025506648240209682
+  ],
+  [
+   "currencyservice",
+   0.024709134055623416
+  ],
+  [
+   "recommendationservice",
+   0.01856348183128048
+  ]
+ ],
+ "incident_id": "inc-10185",
+ "t_received": 1794992177.0661042,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0007075290000102541,
+  "gather_context": 0.002605673999823921,
+  "sanitize": 0.0031673140001657885,
+  "retrieve": 0.0008928520001063589,
+  "diagnose": 9.386100009578513e-05,
+  "open_ticket": 0.005402352000146493,
+  "await_approval": 0.0007014749999143532
+ },
+ "burn_rate": 76.63997986567175,
+ "diagnosis": {
+  "root_cause_service": "cartservice",
+  "fault_type": "dependency_down",
+  "confidence": 0.5,
+  "summary": "Likely dependency_down on cartservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks cartservice first"
+   },
+   {
+    "ref": "log:log-00140",
+    "claim": "cartservice: transport is closing; retrying"
+   },
+   {
+    "ref": "log:log-00146",
+    "claim": "cartservice: tcp retransmission on outbound connection"
+   },
+   {
+    "ref": "log:log-00158",
+    "claim": "cartservice: request timeout after 2526ms"
+   },
+   {
+    "ref": "rb:rb-dependency_down#diagnosis",
+    "claim": "matching runbook: Downstream dependency down"
+   }
+  ],
+  "fix_steps": [
+   "Inspect pod status, node pressure and recent evictions for the dependency.",
+   "Mitigate: rollout restart or scale up the dependency; roll back if a release removed it.",
+   "Follow up: add PodDisruptionBudgets and readiness probes."
+  ],
+  "risk_level": "high",
+  "proposed_actions": [
+   {
+    "kind": "rollout_restart",
+    "target": "cartservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "5a80f71c999b44ce86d34a5a3e52b46a",
+  "number": "INC0010186",
+  "urgency": "1",
+  "impact": "1",
+  "affected_cis": 4
+ },
+ "time_to_ticket_s": 0.012206077575683594,
+ "proposed_actions": [
+  {
+   "kind": "rollout_restart",
+   "target": "cartservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "9d6c733c89fd70b4"
+}

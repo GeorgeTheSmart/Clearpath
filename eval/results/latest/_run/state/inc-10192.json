@@ -1,0 +1,127 @@
+{
+ "t_det": 129,
+ "ranking": [
+  [
+   "paymentservice",
+   0.3938405579723578
+  ],
+  [
+   "checkoutservice",
+   0.25543705647141557
+  ],
+  [
+   "currencyservice",
+   0.07944033460574428
+  ],
+  [
+   "productcatalogservice",
+   0.05077655340620512
+  ],
+  [
+   "emailservice",
+   0.04694774827105092
+  ],
+  [
+   "shippingservice",
+   0.03846296370159512
+  ],
+  [
+   "adservice",
+   0.03455276944921468
+  ],
+  [
+   "cartservice",
+   0.03241600739171753
+  ],
+  [
+   "redis-cart",
+   0.02822687973454239
+  ],
+  [
+   "recommendationservice",
+   0.02787555758646538
+  ],
+  [
+   "frontend",
+   0.012023571409691404
+  ]
+ ],
+ "incident_id": "inc-10192",
+ "t_received": 1794992177.2263067,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0007602189998578979,
+  "gather_context": 0.0026350490002187144,
+  "sanitize": 0.002053774000160047,
+  "retrieve": 0.0009240559998033859,
+  "diagnose": 9.751600009622052e-05,
+  "open_ticket": 0.004025823000119999,
+  "await_approval": 0.0007221830001071794
+ },
+ "burn_rate": 6.615085307335741,
+ "diagnosis": {
+  "root_cause_service": "paymentservice",
+  "fault_type": "bad_config",
+  "confidence": 0.5,
+  "summary": "Likely bad_config on paymentservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks paymentservice first"
+   },
+   {
+    "ref": "log:log-00130",
+    "claim": "paymentservice: config validation error: sku_42 must be set"
+   },
+   {
+    "ref": "log:log-00133",
+    "claim": "paymentservice: invalid configuration: missing required key CURRENCY_URL"
+   },
+   {
+    "ref": "log:log-00138",
+    "claim": "paymentservice: config validation error: sku_42 must be set"
+   },
+   {
+    "ref": "rb:rb-bad_config#diagnosis",
+    "claim": "matching runbook: Bad configuration or environment variable"
+   }
+  ],
+  "fix_steps": [
+   "Find the key named in 'invalid configuration', 'missing required key' or parse errors.",
+   "Mitigate: revert the ConfigMap and rollout restart, or roll back the deployment revision.",
+   "Follow up: validate config in CI and use a schema."
+  ],
+  "risk_level": "high",
+  "proposed_actions": [
+   {
+    "kind": "rollback",
+    "target": "paymentservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "76f6d5b46ecd4cbe9bffd323449dfd23",
+  "number": "INC0010193",
+  "urgency": "2",
+  "impact": "2",
+  "affected_cis": 2
+ },
+ "time_to_ticket_s": 0.009762763977050781,
+ "proposed_actions": [
+  {
+   "kind": "rollback",
+   "target": "paymentservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "10b955e31d2b2b08"
+}

@@ -1,0 +1,125 @@
+{
+ "t_det": 127,
+ "ranking": [
+  [
+   "recommendationservice",
+   0.44133240919415334
+  ],
+  [
+   "productcatalogservice",
+   0.14117160231346274
+  ],
+  [
+   "shippingservice",
+   0.08081921300145632
+  ],
+  [
+   "paymentservice",
+   0.06319258234516104
+  ],
+  [
+   "emailservice",
+   0.06060269416858442
+  ],
+  [
+   "redis-cart",
+   0.04750623233836267
+  ],
+  [
+   "currencyservice",
+   0.04397175212712181
+  ],
+  [
+   "adservice",
+   0.040714743983938366
+  ],
+  [
+   "cartservice",
+   0.029776196923411644
+  ],
+  [
+   "frontend",
+   0.027595256350980472
+  ],
+  [
+   "checkoutservice",
+   0.02331731725336711
+  ]
+ ],
+ "incident_id": "inc-10114",
+ "t_received": 1794992175.4024315,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0005998520000503049,
+  "gather_context": 0.0025384740001754835,
+  "sanitize": 0.0011333909997119918,
+  "retrieve": 0.0008594410001023789,
+  "diagnose": 9.012999998958549e-05,
+  "open_ticket": 0.007592736999868066,
+  "await_approval": 0.0010579650002000562
+ },
+ "burn_rate": 2.7793102469209594,
+ "diagnosis": {
+  "root_cause_service": "recommendationservice",
+  "fault_type": "latency_injection",
+  "confidence": 0.5,
+  "summary": "Likely latency_injection on recommendationservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks recommendationservice first"
+   },
+   {
+    "ref": "log:log-00125",
+    "claim": "recommendationservice: slow response from network peer"
+   },
+   {
+    "ref": "log:log-00129",
+    "claim": "recommendationservice: slow response from network peer"
+   },
+   {
+    "ref": "log:log-00133",
+    "claim": "recommendationservice: slow response from network peer"
+   },
+   {
+    "ref": "rb:rb-latency_injection#symptoms",
+    "claim": "matching runbook: Network latency to a dependency"
+   }
+  ],
+  "fix_steps": [
+   "Follow the matching runbook."
+  ],
+  "risk_level": "medium",
+  "proposed_actions": [
+   {
+    "kind": "rollout_restart",
+    "target": "recommendationservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "0854980e838f4096a62eca14f13c7e2e",
+  "number": "INC0010115",
+  "urgency": "2",
+  "impact": "3",
+  "affected_cis": 3
+ },
+ "time_to_ticket_s": 0.011270761489868164,
+ "proposed_actions": [
+  {
+   "kind": "rollout_restart",
+   "target": "recommendationservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "c7d6054c1e9ed4e0"
+}

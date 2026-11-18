@@ -1,0 +1,127 @@
+{
+ "t_det": 153,
+ "ranking": [
+  [
+   "checkoutservice",
+   0.2840141626131847
+  ],
+  [
+   "currencyservice",
+   0.11352895082312095
+  ],
+  [
+   "shippingservice",
+   0.08449395613560691
+  ],
+  [
+   "emailservice",
+   0.08422476756506253
+  ],
+  [
+   "adservice",
+   0.08258090381103618
+  ],
+  [
+   "cartservice",
+   0.0823280326461596
+  ],
+  [
+   "redis-cart",
+   0.07738394993154024
+  ],
+  [
+   "productcatalogservice",
+   0.07297868243219637
+  ],
+  [
+   "paymentservice",
+   0.06882195703539813
+  ],
+  [
+   "recommendationservice",
+   0.030126761711238674
+  ],
+  [
+   "frontend",
+   0.019517875295455817
+  ]
+ ],
+ "incident_id": "inc-10287",
+ "t_received": 1794992179.363843,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0010006580000663234,
+  "gather_context": 0.002920032000020001,
+  "sanitize": 0.0023690640000495478,
+  "retrieve": 0.0010142750002160028,
+  "diagnose": 0.00013864000038665836,
+  "open_ticket": 0.008461941000405204,
+  "await_approval": 0.0009527560000606172
+ },
+ "burn_rate": 9.038771699662615,
+ "diagnosis": {
+  "root_cause_service": "checkoutservice",
+  "fault_type": "bad_deploy",
+  "confidence": 0.5,
+  "summary": "Likely bad_deploy on checkoutservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks checkoutservice first"
+   },
+   {
+    "ref": "log:log-00161",
+    "claim": "checkoutservice: unhandled exception in handler: KeyError 'sku_42'"
+   },
+   {
+    "ref": "log:log-00163",
+    "claim": "checkoutservice: 500 Internal Server Error returned to caller"
+   },
+   {
+    "ref": "log:log-00166",
+    "claim": "checkoutservice: TypeError: cannot read property of undefined"
+   },
+   {
+    "ref": "rb:rb-bad_deploy#diagnosis",
+    "claim": "matching runbook: Bad deploy (regression in a new release)"
+   }
+  ],
+  "fix_steps": [
+   "Check for new exception types (KeyError, TypeError, assertion failures) after the rollout.",
+   "Mitigate: roll back to the previous revision (`rollback` action).",
+   "Follow up: add a canary stage with automated analysis before full rollout."
+  ],
+  "risk_level": "high",
+  "proposed_actions": [
+   {
+    "kind": "rollback",
+    "target": "checkoutservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "2ac5e8015b044f489bb1bb238177682a",
+  "number": "INC0010288",
+  "urgency": "2",
+  "impact": "2",
+  "affected_cis": 8
+ },
+ "time_to_ticket_s": 0.015010595321655273,
+ "proposed_actions": [
+  {
+   "kind": "rollback",
+   "target": "checkoutservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "0fe8448ca06efb39"
+}

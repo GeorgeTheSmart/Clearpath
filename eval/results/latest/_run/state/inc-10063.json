@@ -1,0 +1,127 @@
+{
+ "t_det": 129,
+ "ranking": [
+  [
+   "productcatalogservice",
+   0.586069207698487
+  ],
+  [
+   "recommendationservice",
+   0.20103143160183873
+  ],
+  [
+   "frontend",
+   0.04270112935742804
+  ],
+  [
+   "checkoutservice",
+   0.04214188890419172
+  ],
+  [
+   "paymentservice",
+   0.022036990867452973
+  ],
+  [
+   "redis-cart",
+   0.01995261362205419
+  ],
+  [
+   "adservice",
+   0.01835223364918065
+  ],
+  [
+   "emailservice",
+   0.01779349537318354
+  ],
+  [
+   "shippingservice",
+   0.017211118117104247
+  ],
+  [
+   "currencyservice",
+   0.016846943881222286
+  ],
+  [
+   "cartservice",
+   0.015862946927856496
+  ]
+ ],
+ "incident_id": "inc-10063",
+ "t_received": 1794992174.2125187,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0005312279999998282,
+  "gather_context": 0.002962875000321219,
+  "sanitize": 0.0023179589998107986,
+  "retrieve": 0.001107175000015559,
+  "diagnose": 0.0001054619997375994,
+  "open_ticket": 0.005037225999785733,
+  "await_approval": 0.0007576610000796791
+ },
+ "burn_rate": 4.95592741005883,
+ "diagnosis": {
+  "root_cause_service": "productcatalogservice",
+  "fault_type": "memory_leak",
+  "confidence": 0.5,
+  "summary": "Likely memory_leak on productcatalogservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks productcatalogservice first"
+   },
+   {
+    "ref": "log:log-00126",
+    "claim": "productcatalogservice: GC pause 3505ms, heap still growing"
+   },
+   {
+    "ref": "log:log-00127",
+    "claim": "productcatalogservice: GC pause 786ms, heap still growing"
+   },
+   {
+    "ref": "log:log-00136",
+    "claim": "productcatalogservice: allocation failure, retrying after full GC"
+   },
+   {
+    "ref": "rb:rb-memory_leak#diagnosis",
+    "claim": "matching runbook: Memory leak leading to OOMKill"
+   }
+  ],
+  "fix_steps": [
+   "Look for long GC pauses, heap growth messages and allocation failures in logs.",
+   "Mitigate: rollout restart buys time; roll back if the growth started with a release.",
+   "Follow up: capture a heap profile before the next kill; raise the limit only as a stopgap."
+  ],
+  "risk_level": "medium",
+  "proposed_actions": [
+   {
+    "kind": "rollout_restart",
+    "target": "productcatalogservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "32da9cf4a331438ca138566553c50d7a",
+  "number": "INC0010064",
+  "urgency": "2",
+  "impact": "3",
+  "affected_cis": 4
+ },
+ "time_to_ticket_s": 0.011422872543334961,
+ "proposed_actions": [
+  {
+   "kind": "rollout_restart",
+   "target": "productcatalogservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "d335755cfef7725a"
+}

@@ -1,0 +1,127 @@
+{
+ "t_det": 148,
+ "ranking": [
+  [
+   "currencyservice",
+   0.6101490193649513
+  ],
+  [
+   "checkoutservice",
+   0.10329657932824457
+  ],
+  [
+   "frontend",
+   0.0621911959815482
+  ],
+  [
+   "shippingservice",
+   0.048409022277099804
+  ],
+  [
+   "productcatalogservice",
+   0.036089800955278556
+  ],
+  [
+   "emailservice",
+   0.02882740214490537
+  ],
+  [
+   "redis-cart",
+   0.028482621196418513
+  ],
+  [
+   "cartservice",
+   0.02827390934756744
+  ],
+  [
+   "adservice",
+   0.02680210072737639
+  ],
+  [
+   "paymentservice",
+   0.016591536574222347
+  ],
+  [
+   "recommendationservice",
+   0.010886812102387657
+  ]
+ ],
+ "incident_id": "inc-10246",
+ "t_received": 1794992178.4326622,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0007861660001253767,
+  "gather_context": 0.0027329750000717468,
+  "sanitize": 0.004049101999953564,
+  "retrieve": 0.0010860520001187979,
+  "diagnose": 0.00011955800027863006,
+  "open_ticket": 0.004809423000097013,
+  "await_approval": 0.0007706149999648915
+ },
+ "burn_rate": 232.93856114073012,
+ "diagnosis": {
+  "root_cause_service": "currencyservice",
+  "fault_type": "bad_config",
+  "confidence": 0.5,
+  "summary": "Likely bad_config on currencyservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks currencyservice first"
+   },
+   {
+    "ref": "log:log-00130",
+    "claim": "currencyservice: failed to parse env var sku_42: invalid syntax"
+   },
+   {
+    "ref": "log:log-00134",
+    "claim": "currencyservice: config validation error: sku_42 must be set"
+   },
+   {
+    "ref": "log:log-00144",
+    "claim": "currencyservice: failed to parse env var REDIS_ADDR: invalid syntax"
+   },
+   {
+    "ref": "rb:rb-bad_config#diagnosis",
+    "claim": "matching runbook: Bad configuration or environment variable"
+   }
+  ],
+  "fix_steps": [
+   "Find the key named in 'invalid configuration', 'missing required key' or parse errors.",
+   "Mitigate: revert the ConfigMap and rollout restart, or roll back the deployment revision.",
+   "Follow up: validate config in CI and use a schema."
+  ],
+  "risk_level": "high",
+  "proposed_actions": [
+   {
+    "kind": "rollback",
+    "target": "currencyservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "03546e40db7b4778a061f55a3647e57e",
+  "number": "INC0010247",
+  "urgency": "1",
+  "impact": "1",
+  "affected_cis": 3
+ },
+ "time_to_ticket_s": 0.01274728775024414,
+ "proposed_actions": [
+  {
+   "kind": "rollback",
+   "target": "currencyservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "89438e4ac78b2ef6"
+}

@@ -1,0 +1,125 @@
+{
+ "t_det": 129,
+ "ranking": [
+  [
+   "productcatalogservice",
+   0.4914845796357826
+  ],
+  [
+   "checkoutservice",
+   0.14981401416037327
+  ],
+  [
+   "recommendationservice",
+   0.11216404186139423
+  ],
+  [
+   "emailservice",
+   0.04910512229732932
+  ],
+  [
+   "frontend",
+   0.04292357791280062
+  ],
+  [
+   "paymentservice",
+   0.03382356431428736
+  ],
+  [
+   "currencyservice",
+   0.027413802074069238
+  ],
+  [
+   "shippingservice",
+   0.02640127834035317
+  ],
+  [
+   "cartservice",
+   0.026276177415741755
+  ],
+  [
+   "adservice",
+   0.02219289320544822
+  ],
+  [
+   "redis-cart",
+   0.018400948782420448
+  ]
+ ],
+ "incident_id": "inc-10212",
+ "t_received": 1794992177.6661024,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0007480130002477381,
+  "gather_context": 0.002615458000036597,
+  "sanitize": 0.004290783999749692,
+  "retrieve": 0.0008724690001145063,
+  "diagnose": 9.696899996924913e-05,
+  "open_ticket": 0.005216080000082002,
+  "await_approval": 0.0007861789999878965
+ },
+ "burn_rate": 64.5049722903561,
+ "diagnosis": {
+  "root_cause_service": "productcatalogservice",
+  "fault_type": "packet_loss",
+  "confidence": 0.5,
+  "summary": "Likely packet_loss on productcatalogservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks productcatalogservice first"
+   },
+   {
+    "ref": "log:log-00139",
+    "claim": "productcatalogservice: request timeout after 3994ms"
+   },
+   {
+    "ref": "log:log-00146",
+    "claim": "productcatalogservice: connection reset by peer"
+   },
+   {
+    "ref": "log:log-00154",
+    "claim": "productcatalogservice: transport is closing; retrying"
+   },
+   {
+    "ref": "rb:rb-packet_loss#symptoms",
+    "claim": "matching runbook: Packet loss / connection resets"
+   }
+  ],
+  "fix_steps": [
+   "Follow the matching runbook."
+  ],
+  "risk_level": "medium",
+  "proposed_actions": [
+   {
+    "kind": "rollout_restart",
+    "target": "productcatalogservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "4c41af4228cf4124a18227853f87afe3",
+  "number": "INC0010213",
+  "urgency": "1",
+  "impact": "1",
+  "affected_cis": 4
+ },
+ "time_to_ticket_s": 0.013146400451660156,
+ "proposed_actions": [
+  {
+   "kind": "rollout_restart",
+   "target": "productcatalogservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "92cd85dc5c3df518"
+}

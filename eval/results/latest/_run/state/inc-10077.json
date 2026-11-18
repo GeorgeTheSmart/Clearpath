@@ -1,0 +1,125 @@
+{
+ "t_det": 156,
+ "ranking": [
+  [
+   "paymentservice",
+   0.506595471882271
+  ],
+  [
+   "checkoutservice",
+   0.1630817899228873
+  ],
+  [
+   "currencyservice",
+   0.0987047484156684
+  ],
+  [
+   "productcatalogservice",
+   0.038546697467576586
+  ],
+  [
+   "frontend",
+   0.031563206410591155
+  ],
+  [
+   "cartservice",
+   0.030271782370787953
+  ],
+  [
+   "adservice",
+   0.03020811119924197
+  ],
+  [
+   "emailservice",
+   0.027668761505924504
+  ],
+  [
+   "redis-cart",
+   0.026945958325162857
+  ],
+  [
+   "shippingservice",
+   0.02658774361725955
+  ],
+  [
+   "recommendationservice",
+   0.019825728882628815
+  ]
+ ],
+ "incident_id": "inc-10077",
+ "t_received": 1794992174.5151572,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.000580217000333505,
+  "gather_context": 0.002687063999928796,
+  "sanitize": 0.003035234999970271,
+  "retrieve": 0.0010008600002038293,
+  "diagnose": 9.429200008526095e-05,
+  "open_ticket": 0.0036880759998894064,
+  "await_approval": 0.0008622010000181035
+ },
+ "burn_rate": 31.089629844463868,
+ "diagnosis": {
+  "root_cause_service": "paymentservice",
+  "fault_type": "crash_loop",
+  "confidence": 0.5,
+  "summary": "Likely crash_loop on paymentservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks paymentservice first"
+   },
+   {
+    "ref": "log:log-00168",
+    "claim": "paymentservice: process exited with code 2 during startup"
+   },
+   {
+    "ref": "log:log-00169",
+    "claim": "paymentservice: panic: runtime error: invalid memory address or nil pointer dereference"
+   },
+   {
+    "ref": "log:log-00178",
+    "claim": "paymentservice: fatal error: initialisation failed, exiting"
+   },
+   {
+    "ref": "rb:rb-crash_loop#symptoms",
+    "claim": "matching runbook: Crash loop (CrashLoopBackOff)"
+   }
+  ],
+  "fix_steps": [
+   "Follow the matching runbook."
+  ],
+  "risk_level": "high",
+  "proposed_actions": [
+   {
+    "kind": "rollback",
+    "target": "paymentservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "d401df6c620e44e9bb69e66aefd06ba9",
+  "number": "INC0010078",
+  "urgency": "1",
+  "impact": "1",
+  "affected_cis": 2
+ },
+ "time_to_ticket_s": 0.010516643524169922,
+ "proposed_actions": [
+  {
+   "kind": "rollback",
+   "target": "paymentservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "2f4cfc602f8734c8"
+}

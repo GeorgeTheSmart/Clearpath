@@ -1,0 +1,125 @@
+{
+ "t_det": 134,
+ "ranking": [
+  [
+   "adservice",
+   0.4838376666817031
+  ],
+  [
+   "cartservice",
+   0.08101814844493395
+  ],
+  [
+   "productcatalogservice",
+   0.06676377224224489
+  ],
+  [
+   "redis-cart",
+   0.06563093723674543
+  ],
+  [
+   "currencyservice",
+   0.06286169035232375
+  ],
+  [
+   "emailservice",
+   0.05656517812720518
+  ],
+  [
+   "shippingservice",
+   0.056171750262334584
+  ],
+  [
+   "recommendationservice",
+   0.0497573928700378
+  ],
+  [
+   "paymentservice",
+   0.04256023278518918
+  ],
+  [
+   "frontend",
+   0.02423072050461812
+  ],
+  [
+   "checkoutservice",
+   0.010602510492664105
+  ]
+ ],
+ "incident_id": "inc-10081",
+ "t_received": 1794992174.6050699,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0007896130000517587,
+  "gather_context": 0.0027165860001332476,
+  "sanitize": 0.0015071289999468718,
+  "retrieve": 0.0008722180000404478,
+  "diagnose": 9.307700020144694e-05,
+  "open_ticket": 0.0038159079999786627,
+  "await_approval": 0.000585410999974556
+ },
+ "burn_rate": 8.773932854169455,
+ "diagnosis": {
+  "root_cause_service": "adservice",
+  "fault_type": "packet_loss",
+  "confidence": 0.5,
+  "summary": "Likely packet_loss on adservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks adservice first"
+   },
+   {
+    "ref": "log:log-00123",
+    "claim": "adservice: transport is closing; retrying"
+   },
+   {
+    "ref": "log:log-00125",
+    "claim": "adservice: connection reset by peer"
+   },
+   {
+    "ref": "log:log-00127",
+    "claim": "adservice: connection reset by peer"
+   },
+   {
+    "ref": "rb:rb-packet_loss#symptoms",
+    "claim": "matching runbook: Packet loss / connection resets"
+   }
+  ],
+  "fix_steps": [
+   "Follow the matching runbook."
+  ],
+  "risk_level": "medium",
+  "proposed_actions": [
+   {
+    "kind": "rollout_restart",
+    "target": "adservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "1b46ff1256ea4aecbe0f5c0f1774dd64",
+  "number": "INC0010082",
+  "urgency": "2",
+  "impact": "2",
+  "affected_cis": 2
+ },
+ "time_to_ticket_s": 0.009269952774047852,
+ "proposed_actions": [
+  {
+   "kind": "rollout_restart",
+   "target": "adservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "1be783001bd011d3"
+}

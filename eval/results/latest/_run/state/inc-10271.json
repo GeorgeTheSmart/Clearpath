@@ -1,0 +1,113 @@
+{
+ "t_det": 164,
+ "ranking": [
+  [
+   "adservice",
+   0.5380155383224339
+  ],
+  [
+   "redis-cart",
+   0.1863788092386111
+  ],
+  [
+   "frontend",
+   0.06254401849383337
+  ],
+  [
+   "productcatalogservice",
+   0.03164475063323626
+  ],
+  [
+   "shippingservice",
+   0.03126164059667266
+  ],
+  [
+   "currencyservice",
+   0.030541245761785553
+  ],
+  [
+   "paymentservice",
+   0.02921214661839676
+  ],
+  [
+   "recommendationservice",
+   0.02767763802801714
+  ],
+  [
+   "emailservice",
+   0.02686380273205692
+  ],
+  [
+   "cartservice",
+   0.025217076937742614
+  ],
+  [
+   "checkoutservice",
+   0.010643332637213794
+  ]
+ ],
+ "incident_id": "inc-10271",
+ "t_received": 1794992179.0021136,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0008732319997761806,
+  "gather_context": 0.002874305000204913,
+  "sanitize": 0.0014996139998402214,
+  "retrieve": 0.0007105439999577357,
+  "diagnose": 8.309900022140937e-05,
+  "open_ticket": 0.004855701999986195,
+  "await_approval": 0.0008869799999047245
+ },
+ "burn_rate": 174.42355983746228,
+ "diagnosis": {
+  "root_cause_service": "adservice",
+  "fault_type": "crash_loop",
+  "confidence": 0.5,
+  "summary": "Likely crash_loop on adservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks adservice first"
+   },
+   {
+    "ref": "rb:rb-crash_loop#symptoms",
+    "claim": "matching runbook: Crash loop (CrashLoopBackOff)"
+   }
+  ],
+  "fix_steps": [
+   "Follow the matching runbook."
+  ],
+  "risk_level": "high",
+  "proposed_actions": [
+   {
+    "kind": "rollback",
+    "target": "adservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 2,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "0d17ef911cb247178f8b5654047f20d9",
+  "number": "INC0010272",
+  "urgency": "1",
+  "impact": "1",
+  "affected_cis": 2
+ },
+ "time_to_ticket_s": 0.01001286506652832,
+ "proposed_actions": [
+  {
+   "kind": "rollback",
+   "target": "adservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "4993e0e801a68936"
+}

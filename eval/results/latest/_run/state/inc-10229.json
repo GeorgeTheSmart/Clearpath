@@ -1,0 +1,125 @@
+{
+ "t_det": 147,
+ "ranking": [
+  [
+   "currencyservice",
+   0.5067593675751633
+  ],
+  [
+   "checkoutservice",
+   0.23662960181675718
+  ],
+  [
+   "frontend",
+   0.07472382422046825
+  ],
+  [
+   "emailservice",
+   0.04184370234781968
+  ],
+  [
+   "productcatalogservice",
+   0.03486673605095971
+  ],
+  [
+   "redis-cart",
+   0.024223082722710353
+  ],
+  [
+   "paymentservice",
+   0.023159499909544988
+  ],
+  [
+   "adservice",
+   0.020777655319704037
+  ],
+  [
+   "shippingservice",
+   0.019469416866353326
+  ],
+  [
+   "cartservice",
+   0.01042059580580981
+  ],
+  [
+   "recommendationservice",
+   0.007126517364709775
+  ]
+ ],
+ "incident_id": "inc-10229",
+ "t_received": 1794992178.0448213,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0009464630002185004,
+  "gather_context": 0.00293167000018002,
+  "sanitize": 0.0038265430002866196,
+  "retrieve": 0.0011511510001582792,
+  "diagnose": 0.00010348100022383733,
+  "open_ticket": 0.004944366000017908,
+  "await_approval": 0.0008440269998573058
+ },
+ "burn_rate": 390.84238687156954,
+ "diagnosis": {
+  "root_cause_service": "currencyservice",
+  "fault_type": "crash_loop",
+  "confidence": 0.5,
+  "summary": "Likely crash_loop on currencyservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks currencyservice first"
+   },
+   {
+    "ref": "log:log-00158",
+    "claim": "currencyservice: back-off restarting failed container"
+   },
+   {
+    "ref": "log:log-00162",
+    "claim": "currencyservice: fatal error: initialisation failed, exiting"
+   },
+   {
+    "ref": "log:log-00170",
+    "claim": "currencyservice: fatal error: initialisation failed, exiting"
+   },
+   {
+    "ref": "rb:rb-crash_loop#symptoms",
+    "claim": "matching runbook: Crash loop (CrashLoopBackOff)"
+   }
+  ],
+  "fix_steps": [
+   "Follow the matching runbook."
+  ],
+  "risk_level": "high",
+  "proposed_actions": [
+   {
+    "kind": "rollback",
+    "target": "currencyservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "f94cee18567e4ba5a58582218a408e7e",
+  "number": "INC0010230",
+  "urgency": "1",
+  "impact": "1",
+  "affected_cis": 3
+ },
+ "time_to_ticket_s": 0.013077020645141602,
+ "proposed_actions": [
+  {
+   "kind": "rollback",
+   "target": "currencyservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "250c9bd64a8199f5"
+}

@@ -1,0 +1,127 @@
+{
+ "t_det": 132,
+ "ranking": [
+  [
+   "frontend",
+   0.36684844795497656
+  ],
+  [
+   "currencyservice",
+   0.0947248956512568
+  ],
+  [
+   "productcatalogservice",
+   0.08771493399300537
+  ],
+  [
+   "recommendationservice",
+   0.08585007437070344
+  ],
+  [
+   "adservice",
+   0.08288377371077757
+  ],
+  [
+   "shippingservice",
+   0.06749360494594228
+  ],
+  [
+   "emailservice",
+   0.05718514493665415
+  ],
+  [
+   "cartservice",
+   0.04891824102909956
+  ],
+  [
+   "redis-cart",
+   0.043805533847272246
+  ],
+  [
+   "paymentservice",
+   0.03767590009833309
+  ],
+  [
+   "checkoutservice",
+   0.026899449461978767
+  ]
+ ],
+ "incident_id": "inc-10290",
+ "t_received": 1794992179.4372618,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0007988900001691945,
+  "gather_context": 0.0027781240000877006,
+  "sanitize": 0.002244697999685741,
+  "retrieve": 0.0009343249998892134,
+  "diagnose": 9.902499959935085e-05,
+  "open_ticket": 0.007580709000194474,
+  "await_approval": 0.0008627570000498963
+ },
+ "burn_rate": 387.5398143464235,
+ "diagnosis": {
+  "root_cause_service": "frontend",
+  "fault_type": "bad_deploy",
+  "confidence": 0.5,
+  "summary": "Likely bad_deploy on frontend (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks frontend first"
+   },
+   {
+    "ref": "log:log-00121",
+    "claim": "frontend: unhandled exception in handler: KeyError 'PRODUCT_ID'"
+   },
+   {
+    "ref": "log:log-00126",
+    "claim": "frontend: assertion failed in release v4.14"
+   },
+   {
+    "ref": "log:log-00127",
+    "claim": "frontend: 500 Internal Server Error returned to caller"
+   },
+   {
+    "ref": "rb:rb-bad_deploy#diagnosis",
+    "claim": "matching runbook: Bad deploy (regression in a new release)"
+   }
+  ],
+  "fix_steps": [
+   "Check for new exception types (KeyError, TypeError, assertion failures) after the rollout.",
+   "Mitigate: roll back to the previous revision (`rollback` action).",
+   "Follow up: add a canary stage with automated analysis before full rollout."
+  ],
+  "risk_level": "high",
+  "proposed_actions": [
+   {
+    "kind": "rollback",
+    "target": "frontend",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "9f5af4ba65a84fd3997be082be2e0a7d",
+  "number": "INC0010291",
+  "urgency": "1",
+  "impact": "1",
+  "affected_cis": 8
+ },
+ "time_to_ticket_s": 0.013626337051391602,
+ "proposed_actions": [
+  {
+   "kind": "rollback",
+   "target": "frontend",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "ae20195b16eeff9f"
+}

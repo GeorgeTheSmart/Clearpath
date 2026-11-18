@@ -1,0 +1,125 @@
+{
+ "t_det": 121,
+ "ranking": [
+  [
+   "cartservice",
+   0.48399145270084154
+  ],
+  [
+   "productcatalogservice",
+   0.07092869948232323
+  ],
+  [
+   "checkoutservice",
+   0.07092097828068046
+  ],
+  [
+   "redis-cart",
+   0.06554987495744176
+  ],
+  [
+   "frontend",
+   0.05361601862692287
+  ],
+  [
+   "shippingservice",
+   0.04846322147961547
+  ],
+  [
+   "emailservice",
+   0.04392291143186307
+  ],
+  [
+   "currencyservice",
+   0.04389540571201129
+  ],
+  [
+   "adservice",
+   0.04348806389442103
+  ],
+  [
+   "paymentservice",
+   0.04250758995815614
+  ],
+  [
+   "recommendationservice",
+   0.03271578347572329
+  ]
+ ],
+ "incident_id": "inc-10035",
+ "t_received": 1794992173.5193124,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.000599476999923354,
+  "gather_context": 0.002773358000013104,
+  "sanitize": 0.00255613799981802,
+  "retrieve": 0.0013130829997862747,
+  "diagnose": 0.0001301319998674444,
+  "open_ticket": 0.00978991900001347,
+  "await_approval": 0.0005617200004053302
+ },
+ "burn_rate": 34.95816769485437,
+ "diagnosis": {
+  "root_cause_service": "cartservice",
+  "fault_type": "packet_loss",
+  "confidence": 0.5,
+  "summary": "Likely packet_loss on cartservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks cartservice first"
+   },
+   {
+    "ref": "log:log-00116",
+    "claim": "cartservice: request timeout after 1929ms"
+   },
+   {
+    "ref": "log:log-00120",
+    "claim": "cartservice: transport is closing; retrying"
+   },
+   {
+    "ref": "log:log-00124",
+    "claim": "cartservice: request timeout after 4497ms"
+   },
+   {
+    "ref": "rb:rb-packet_loss#symptoms",
+    "claim": "matching runbook: Packet loss / connection resets"
+   }
+  ],
+  "fix_steps": [
+   "Follow the matching runbook."
+  ],
+  "risk_level": "medium",
+  "proposed_actions": [
+   {
+    "kind": "rollout_restart",
+    "target": "cartservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "0fb088220bcc4375952f378a079323c0",
+  "number": "INC0010036",
+  "urgency": "1",
+  "impact": "1",
+  "affected_cis": 4
+ },
+ "time_to_ticket_s": 0.016156435012817383,
+ "proposed_actions": [
+  {
+   "kind": "rollout_restart",
+   "target": "cartservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "197c4f036ada96cc"
+}

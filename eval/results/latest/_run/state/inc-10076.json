@@ -1,0 +1,127 @@
+{
+ "t_det": 153,
+ "ranking": [
+  [
+   "emailservice",
+   0.7067939595285837
+  ],
+  [
+   "checkoutservice",
+   0.08623258587779307
+  ],
+  [
+   "paymentservice",
+   0.03706930255097443
+  ],
+  [
+   "productcatalogservice",
+   0.025932632801623477
+  ],
+  [
+   "adservice",
+   0.02452468684784094
+  ],
+  [
+   "currencyservice",
+   0.023244553461392998
+  ],
+  [
+   "redis-cart",
+   0.022144410191955198
+  ],
+  [
+   "frontend",
+   0.021976353677939577
+  ],
+  [
+   "shippingservice",
+   0.02163213774790848
+  ],
+  [
+   "cartservice",
+   0.016377501191274516
+  ],
+  [
+   "recommendationservice",
+   0.014071876122713583
+  ]
+ ],
+ "incident_id": "inc-10076",
+ "t_received": 1794992174.495276,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0006184959997881379,
+  "gather_context": 0.0028587430001607572,
+  "sanitize": 0.002388404000157607,
+  "retrieve": 0.0009243790000255103,
+  "diagnose": 9.716000022308435e-05,
+  "open_ticket": 0.00414822400034609,
+  "await_approval": 0.0006378670000231068
+ },
+ "burn_rate": 21.863787262840898,
+ "diagnosis": {
+  "root_cause_service": "emailservice",
+  "fault_type": "bad_deploy",
+  "confidence": 0.5,
+  "summary": "Likely bad_deploy on emailservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks emailservice first"
+   },
+   {
+    "ref": "log:log-00149",
+    "claim": "emailservice: assertion failed in release v5.8"
+   },
+   {
+    "ref": "log:log-00156",
+    "claim": "emailservice: TypeError: cannot read property of undefined"
+   },
+   {
+    "ref": "log:log-00160",
+    "claim": "emailservice: 500 Internal Server Error returned to caller"
+   },
+   {
+    "ref": "rb:rb-bad_deploy#diagnosis",
+    "claim": "matching runbook: Bad deploy (regression in a new release)"
+   }
+  ],
+  "fix_steps": [
+   "Check for new exception types (KeyError, TypeError, assertion failures) after the rollout.",
+   "Mitigate: roll back to the previous revision (`rollback` action).",
+   "Follow up: add a canary stage with automated analysis before full rollout."
+  ],
+  "risk_level": "high",
+  "proposed_actions": [
+   {
+    "kind": "rollback",
+    "target": "emailservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "144abf365f95427c8fd5c3436ee737fe",
+  "number": "INC0010077",
+  "urgency": "1",
+  "impact": "1",
+  "affected_cis": 2
+ },
+ "time_to_ticket_s": 0.010167121887207031,
+ "proposed_actions": [
+  {
+   "kind": "rollback",
+   "target": "emailservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "a4ff4a1b5bf76f35"
+}

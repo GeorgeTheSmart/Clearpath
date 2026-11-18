@@ -1,0 +1,127 @@
+{
+ "t_det": 136,
+ "ranking": [
+  [
+   "cartservice",
+   0.6460089099119457
+  ],
+  [
+   "checkoutservice",
+   0.08646188226623462
+  ],
+  [
+   "redis-cart",
+   0.05297711496287027
+  ],
+  [
+   "frontend",
+   0.044838411825744356
+  ],
+  [
+   "productcatalogservice",
+   0.03254914751334044
+  ],
+  [
+   "shippingservice",
+   0.027910145920708142
+  ],
+  [
+   "currencyservice",
+   0.02619486960895242
+  ],
+  [
+   "emailservice",
+   0.025612107329130072
+  ],
+  [
+   "adservice",
+   0.02104854420768586
+  ],
+  [
+   "paymentservice",
+   0.018283449581110847
+  ],
+  [
+   "recommendationservice",
+   0.01811541687227744
+  ]
+ ],
+ "incident_id": "inc-10247",
+ "t_received": 1794992178.457383,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0008911130003070866,
+  "gather_context": 0.0026444029999765917,
+  "sanitize": 0.0037256450000313635,
+  "retrieve": 0.0009640790003686561,
+  "diagnose": 0.00011016999997082166,
+  "open_ticket": 0.005638702999931411,
+  "await_approval": 0.0008179439996638393
+ },
+ "burn_rate": 142.22470278438527,
+ "diagnosis": {
+  "root_cause_service": "cartservice",
+  "fault_type": "dns_failure",
+  "confidence": 0.5,
+  "summary": "Likely dns_failure on cartservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks cartservice first"
+   },
+   {
+    "ref": "log:log-00137",
+    "claim": "cartservice: dns query timed out for redis-cart.default.svc.cluster.local"
+   },
+   {
+    "ref": "log:log-00139",
+    "claim": "cartservice: name resolution failed for redis-cart"
+   },
+   {
+    "ref": "log:log-00141",
+    "claim": "cartservice: name resolution failed for redis-cart"
+   },
+   {
+    "ref": "rb:rb-dns_failure#diagnosis",
+    "claim": "matching runbook: DNS resolution failure"
+   }
+  ],
+  "fix_steps": [
+   "Check CoreDNS pods and the failing pod's /etc/resolv.conf and dnsPolicy.",
+   "Mitigate: rollout restart the affected service; restart CoreDNS if it is unhealthy.",
+   "Follow up: add DNS caching (NodeLocal DNSCache) and alert on CoreDNS errors."
+  ],
+  "risk_level": "medium",
+  "proposed_actions": [
+   {
+    "kind": "rollout_restart",
+    "target": "cartservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "de096ad28e114488af60588c1a91d2ac",
+  "number": "INC0010248",
+  "urgency": "1",
+  "impact": "1",
+  "affected_cis": 4
+ },
+ "time_to_ticket_s": 0.013145923614501953,
+ "proposed_actions": [
+  {
+   "kind": "rollout_restart",
+   "target": "cartservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "c5c1c690485a19f3"
+}

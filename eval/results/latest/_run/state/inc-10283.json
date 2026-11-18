@@ -1,0 +1,127 @@
+{
+ "t_det": 133,
+ "ranking": [
+  [
+   "cartservice",
+   0.6174612647105766
+  ],
+  [
+   "checkoutservice",
+   0.1127095207734407
+  ],
+  [
+   "frontend",
+   0.046996968342320755
+  ],
+  [
+   "redis-cart",
+   0.04662392932814406
+  ],
+  [
+   "currencyservice",
+   0.03874008336568508
+  ],
+  [
+   "paymentservice",
+   0.03243397605038955
+  ],
+  [
+   "emailservice",
+   0.028301795827428013
+  ],
+  [
+   "productcatalogservice",
+   0.02558778124670026
+  ],
+  [
+   "shippingservice",
+   0.024174683803110882
+  ],
+  [
+   "adservice",
+   0.01613471500144442
+  ],
+  [
+   "recommendationservice",
+   0.010835281550759714
+  ]
+ ],
+ "incident_id": "inc-10283",
+ "t_received": 1794992179.2770698,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0008023550003599667,
+  "gather_context": 0.002597012000023824,
+  "sanitize": 0.0021195570002419117,
+  "retrieve": 0.0010410750001028646,
+  "diagnose": 0.00011227499999222346,
+  "open_ticket": 0.00557204400001865,
+  "await_approval": 0.000806504000138375
+ },
+ "burn_rate": 4.773028847505098,
+ "diagnosis": {
+  "root_cause_service": "cartservice",
+  "fault_type": "memory_leak",
+  "confidence": 0.5,
+  "summary": "Likely memory_leak on cartservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks cartservice first"
+   },
+   {
+    "ref": "log:log-00118",
+    "claim": "cartservice: container restarted: OOMKilled (exit code 137)"
+   },
+   {
+    "ref": "log:log-00121",
+    "claim": "cartservice: GC pause 1313ms, heap still growing"
+   },
+   {
+    "ref": "log:log-00126",
+    "claim": "cartservice: heap usage at 86% of limit"
+   },
+   {
+    "ref": "rb:rb-memory_leak#diagnosis",
+    "claim": "matching runbook: Memory leak leading to OOMKill"
+   }
+  ],
+  "fix_steps": [
+   "Look for long GC pauses, heap growth messages and allocation failures in logs.",
+   "Mitigate: rollout restart buys time; roll back if the growth started with a release.",
+   "Follow up: capture a heap profile before the next kill; raise the limit only as a stopgap."
+  ],
+  "risk_level": "medium",
+  "proposed_actions": [
+   {
+    "kind": "rollout_restart",
+    "target": "cartservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "ece15efe54da4d698ac5022709ee2d00",
+  "number": "INC0010284",
+  "urgency": "2",
+  "impact": "3",
+  "affected_cis": 4
+ },
+ "time_to_ticket_s": 0.011418581008911133,
+ "proposed_actions": [
+  {
+   "kind": "rollout_restart",
+   "target": "cartservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "b89f0affb96dc78e"
+}

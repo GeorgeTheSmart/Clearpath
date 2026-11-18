@@ -1,0 +1,127 @@
+{
+ "t_det": 134,
+ "ranking": [
+  [
+   "recommendationservice",
+   0.3362987493952767
+  ],
+  [
+   "productcatalogservice",
+   0.16735951547494135
+  ],
+  [
+   "adservice",
+   0.07702549570723538
+  ],
+  [
+   "currencyservice",
+   0.06639302968679846
+  ],
+  [
+   "paymentservice",
+   0.06339776685209658
+  ],
+  [
+   "emailservice",
+   0.060142618868935085
+  ],
+  [
+   "redis-cart",
+   0.05654068500411708
+  ],
+  [
+   "shippingservice",
+   0.05007058896834915
+  ],
+  [
+   "cartservice",
+   0.04892406984088431
+  ],
+  [
+   "frontend",
+   0.04527698771917172
+  ],
+  [
+   "checkoutservice",
+   0.028570492482194225
+  ]
+ ],
+ "incident_id": "inc-10254",
+ "t_received": 1794992178.6069522,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0008155370001077245,
+  "gather_context": 0.002705759000036778,
+  "sanitize": 0.0012475529997573176,
+  "retrieve": 0.0008699589998286683,
+  "diagnose": 9.176599996862933e-05,
+  "open_ticket": 0.004616116999841324,
+  "await_approval": 0.0007574950000162062
+ },
+ "burn_rate": 11.046548843237952,
+ "diagnosis": {
+  "root_cause_service": "recommendationservice",
+  "fault_type": "packet_loss",
+  "confidence": 0.5,
+  "summary": "Likely packet_loss on recommendationservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks recommendationservice first"
+   },
+   {
+    "ref": "log:log-00115",
+    "claim": "recommendationservice: connection reset by peer"
+   },
+   {
+    "ref": "log:log-00116",
+    "claim": "recommendationservice: request timeout after 2220ms"
+   },
+   {
+    "ref": "log:log-00117",
+    "claim": "recommendationservice: transport is closing; retrying"
+   },
+   {
+    "ref": "rb:rb-packet_loss#diagnosis",
+    "claim": "matching runbook: Packet loss / connection resets"
+   }
+  ],
+  "fix_steps": [
+   "Check node network metrics (`node_netstat_Tcp_RetransSegs`) and CNI health.",
+   "Mitigate: reschedule the pods (rollout restart) away from the bad node.",
+   "Follow up: open a ticket with the network/platform team with the node name."
+  ],
+  "risk_level": "medium",
+  "proposed_actions": [
+   {
+    "kind": "rollout_restart",
+    "target": "recommendationservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "00322eb4a30d423fb61310f70707a597",
+  "number": "INC0010255",
+  "urgency": "2",
+  "impact": "2",
+  "affected_cis": 3
+ },
+ "time_to_ticket_s": 0.009588003158569336,
+ "proposed_actions": [
+  {
+   "kind": "rollout_restart",
+   "target": "recommendationservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "e0803963fb6aa247"
+}

@@ -1,0 +1,125 @@
+{
+ "t_det": 152,
+ "ranking": [
+  [
+   "productcatalogservice",
+   0.6065194397426001
+  ],
+  [
+   "recommendationservice",
+   0.1104574151529856
+  ],
+  [
+   "shippingservice",
+   0.04254602623828384
+  ],
+  [
+   "frontend",
+   0.0412505651965303
+  ],
+  [
+   "currencyservice",
+   0.035466738688819416
+  ],
+  [
+   "paymentservice",
+   0.02987378362017388
+  ],
+  [
+   "redis-cart",
+   0.029250936430795196
+  ],
+  [
+   "emailservice",
+   0.028194878437630945
+  ],
+  [
+   "checkoutservice",
+   0.027510164268842653
+  ],
+  [
+   "adservice",
+   0.025676142452582932
+  ],
+  [
+   "cartservice",
+   0.023253909770755133
+  ]
+ ],
+ "incident_id": "inc-10279",
+ "t_received": 1794992179.1856496,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0009708669999781705,
+  "gather_context": 0.003023593999841978,
+  "sanitize": 0.0016224830001192458,
+  "retrieve": 0.0008524509999006114,
+  "diagnose": 0.00013650600021719583,
+  "open_ticket": 0.006662422000317747,
+  "await_approval": 0.0011572970001907379
+ },
+ "burn_rate": 6.142198133444026,
+ "diagnosis": {
+  "root_cause_service": "productcatalogservice",
+  "fault_type": "latency_injection",
+  "confidence": 0.5,
+  "summary": "Likely latency_injection on productcatalogservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks productcatalogservice first"
+   },
+   {
+    "ref": "log:log-00121",
+    "claim": "productcatalogservice: request timeout after 3430ms"
+   },
+   {
+    "ref": "log:log-00126",
+    "claim": "productcatalogservice: request timeout after 1620ms"
+   },
+   {
+    "ref": "log:log-00130",
+    "claim": "productcatalogservice: slow response from network peer"
+   },
+   {
+    "ref": "rb:rb-latency_injection#symptoms",
+    "claim": "matching runbook: Network latency to a dependency"
+   }
+  ],
+  "fix_steps": [
+   "Follow the matching runbook."
+  ],
+  "risk_level": "medium",
+  "proposed_actions": [
+   {
+    "kind": "rollout_restart",
+    "target": "productcatalogservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "06db40ff82af4f079d9a878205b7659a",
+  "number": "INC0010280",
+  "urgency": "2",
+  "impact": "2",
+  "affected_cis": 4
+ },
+ "time_to_ticket_s": 0.01221323013305664,
+ "proposed_actions": [
+  {
+   "kind": "rollout_restart",
+   "target": "productcatalogservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "a2ef875437ebca35"
+}

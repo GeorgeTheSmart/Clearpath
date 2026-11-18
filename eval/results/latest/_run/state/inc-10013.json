@@ -1,0 +1,125 @@
+{
+ "t_det": 156,
+ "ranking": [
+  [
+   "shippingservice",
+   0.4598430903831878
+  ],
+  [
+   "paymentservice",
+   0.08627565192355037
+  ],
+  [
+   "redis-cart",
+   0.067554139108472
+  ],
+  [
+   "cartservice",
+   0.05616496413317518
+  ],
+  [
+   "recommendationservice",
+   0.05595843134253784
+  ],
+  [
+   "checkoutservice",
+   0.05524274890357781
+  ],
+  [
+   "productcatalogservice",
+   0.05210197954067711
+  ],
+  [
+   "currencyservice",
+   0.045062414546232714
+  ],
+  [
+   "emailservice",
+   0.043271739123832934
+  ],
+  [
+   "adservice",
+   0.04306054298897132
+  ],
+  [
+   "frontend",
+   0.035464298005785044
+  ]
+ ],
+ "incident_id": "inc-10013",
+ "t_received": 1794992172.9975712,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0005427979999694799,
+  "gather_context": 0.0031376050001199474,
+  "sanitize": 0.001253085999906034,
+  "retrieve": 0.0009678189999249298,
+  "diagnose": 0.00013986100020701997,
+  "open_ticket": 0.004931305999889446,
+  "await_approval": 0.0006091580003158015
+ },
+ "burn_rate": 11.167238555492103,
+ "diagnosis": {
+  "root_cause_service": "shippingservice",
+  "fault_type": "packet_loss",
+  "confidence": 0.5,
+  "summary": "Likely packet_loss on shippingservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks shippingservice first"
+   },
+   {
+    "ref": "log:log-00149",
+    "claim": "shippingservice: request timeout after 2789ms"
+   },
+   {
+    "ref": "log:log-00150",
+    "claim": "shippingservice: tcp retransmission on outbound connection"
+   },
+   {
+    "ref": "log:log-00153",
+    "claim": "shippingservice: tcp retransmission on outbound connection"
+   },
+   {
+    "ref": "rb:rb-packet_loss#symptoms",
+    "claim": "matching runbook: Packet loss / connection resets"
+   }
+  ],
+  "fix_steps": [
+   "Follow the matching runbook."
+  ],
+  "risk_level": "medium",
+  "proposed_actions": [
+   {
+    "kind": "rollout_restart",
+    "target": "shippingservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "9906d11ef8544026a2a3d34ba5e24231",
+  "number": "INC0010014",
+  "urgency": "2",
+  "impact": "2",
+  "affected_cis": 3
+ },
+ "time_to_ticket_s": 0.010385513305664062,
+ "proposed_actions": [
+  {
+   "kind": "rollout_restart",
+   "target": "shippingservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "da1709900d1dbd38"
+}

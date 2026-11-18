@@ -1,0 +1,125 @@
+{
+ "t_det": 154,
+ "ranking": [
+  [
+   "redis-cart",
+   0.49778497458963467
+  ],
+  [
+   "cartservice",
+   0.10396672415137222
+  ],
+  [
+   "productcatalogservice",
+   0.07751884414835739
+  ],
+  [
+   "checkoutservice",
+   0.06804706867915472
+  ],
+  [
+   "paymentservice",
+   0.0475437059771705
+  ],
+  [
+   "adservice",
+   0.04378106891046702
+  ],
+  [
+   "emailservice",
+   0.04360066596431997
+  ],
+  [
+   "currencyservice",
+   0.036623141483569106
+  ],
+  [
+   "shippingservice",
+   0.0346414488719674
+  ],
+  [
+   "frontend",
+   0.03246514763469181
+  ],
+  [
+   "recommendationservice",
+   0.014027209589295243
+  ]
+ ],
+ "incident_id": "inc-10125",
+ "t_received": 1794992175.6611814,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.001179360000151064,
+  "gather_context": 0.0037870660003136436,
+  "sanitize": 0.004932659999667521,
+  "retrieve": 0.001074913000138622,
+  "diagnose": 0.00018893600008595968,
+  "open_ticket": 0.005284253999889188,
+  "await_approval": 0.0006346710001707834
+ },
+ "burn_rate": 25.593342465244525,
+ "diagnosis": {
+  "root_cause_service": "redis-cart",
+  "fault_type": "packet_loss",
+  "confidence": 0.5,
+  "summary": "Likely packet_loss on redis-cart (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks redis-cart first"
+   },
+   {
+    "ref": "log:log-00162",
+    "claim": "redis-cart: transport is closing; retrying"
+   },
+   {
+    "ref": "log:log-00175",
+    "claim": "redis-cart: request timeout after 1598ms"
+   },
+   {
+    "ref": "log:log-00184",
+    "claim": "redis-cart: transport is closing; retrying"
+   },
+   {
+    "ref": "rb:rb-packet_loss#symptoms",
+    "claim": "matching runbook: Packet loss / connection resets"
+   }
+  ],
+  "fix_steps": [
+   "Follow the matching runbook."
+  ],
+  "risk_level": "medium",
+  "proposed_actions": [
+   {
+    "kind": "rollout_restart",
+    "target": "redis-cart",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "d3dfa2edf1a341feb765b3d4079fb5bb",
+  "number": "INC0010126",
+  "urgency": "1",
+  "impact": "1",
+  "affected_cis": 2
+ },
+ "time_to_ticket_s": 0.01584029197692871,
+ "proposed_actions": [
+  {
+   "kind": "rollout_restart",
+   "target": "redis-cart",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "e2ebd0bcb342e927"
+}

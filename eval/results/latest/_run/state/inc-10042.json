@@ -1,0 +1,127 @@
+{
+ "t_det": 164,
+ "ranking": [
+  [
+   "emailservice",
+   0.4641295022304895
+  ],
+  [
+   "checkoutservice",
+   0.1281415387100209
+  ],
+  [
+   "currencyservice",
+   0.06820508078429038
+  ],
+  [
+   "cartservice",
+   0.05922952586763129
+  ],
+  [
+   "adservice",
+   0.04612423044862989
+  ],
+  [
+   "productcatalogservice",
+   0.04482090059512572
+  ],
+  [
+   "redis-cart",
+   0.041782821652771376
+  ],
+  [
+   "shippingservice",
+   0.0409514542821745
+  ],
+  [
+   "paymentservice",
+   0.040745388306597484
+  ],
+  [
+   "frontend",
+   0.03331406839500315
+  ],
+  [
+   "recommendationservice",
+   0.032555488727265824
+  ]
+ ],
+ "incident_id": "inc-10042",
+ "t_received": 1794992173.702304,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0006102190000092378,
+  "gather_context": 0.0030407200001718593,
+  "sanitize": 0.0032118250001076376,
+  "retrieve": 0.0010850619996745081,
+  "diagnose": 0.00012420800021573086,
+  "open_ticket": 0.005036221999944246,
+  "await_approval": 0.0005155409999133553
+ },
+ "burn_rate": 11.024319495218847,
+ "diagnosis": {
+  "root_cause_service": "emailservice",
+  "fault_type": "bad_config",
+  "confidence": 0.5,
+  "summary": "Likely bad_config on emailservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks emailservice first"
+   },
+   {
+    "ref": "log:log-00159",
+    "claim": "emailservice: failed to parse env var PORT: invalid syntax"
+   },
+   {
+    "ref": "log:log-00160",
+    "claim": "emailservice: config validation error: PORT must be set"
+   },
+   {
+    "ref": "log:log-00165",
+    "claim": "emailservice: failed to parse env var REDIS_ADDR: invalid syntax"
+   },
+   {
+    "ref": "rb:rb-bad_config#diagnosis",
+    "claim": "matching runbook: Bad configuration or environment variable"
+   }
+  ],
+  "fix_steps": [
+   "Find the key named in 'invalid configuration', 'missing required key' or parse errors.",
+   "Mitigate: revert the ConfigMap and rollout restart, or roll back the deployment revision.",
+   "Follow up: validate config in CI and use a schema."
+  ],
+  "risk_level": "high",
+  "proposed_actions": [
+   {
+    "kind": "rollback",
+    "target": "emailservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "55c7f30e03874a03acef81424f471328",
+  "number": "INC0010043",
+  "urgency": "2",
+  "impact": "2",
+  "affected_cis": 2
+ },
+ "time_to_ticket_s": 0.012447834014892578,
+ "proposed_actions": [
+  {
+   "kind": "rollback",
+   "target": "emailservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "f96a9ced106f78c4"
+}

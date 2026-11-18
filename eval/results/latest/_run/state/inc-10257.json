@@ -1,0 +1,125 @@
+{
+ "t_det": 132,
+ "ranking": [
+  [
+   "adservice",
+   0.458759846310255
+  ],
+  [
+   "paymentservice",
+   0.08876566098747411
+  ],
+  [
+   "redis-cart",
+   0.08660952132599598
+  ],
+  [
+   "productcatalogservice",
+   0.08608908584426395
+  ],
+  [
+   "shippingservice",
+   0.061636657002344726
+  ],
+  [
+   "currencyservice",
+   0.05336289595579942
+  ],
+  [
+   "emailservice",
+   0.04261119223299183
+  ],
+  [
+   "cartservice",
+   0.03869521569898235
+  ],
+  [
+   "recommendationservice",
+   0.03590520687921432
+  ],
+  [
+   "checkoutservice",
+   0.025996721986776897
+  ],
+  [
+   "frontend",
+   0.021567995775901246
+  ]
+ ],
+ "incident_id": "inc-10257",
+ "t_received": 1794992178.6649866,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0007964979999997013,
+  "gather_context": 0.0024007330002859817,
+  "sanitize": 0.0015902830000413815,
+  "retrieve": 0.000865814999997383,
+  "diagnose": 8.813300019028247e-05,
+  "open_ticket": 0.0053480659998967894,
+  "await_approval": 0.0009362589999000193
+ },
+ "burn_rate": 2.7361254340368935,
+ "diagnosis": {
+  "root_cause_service": "adservice",
+  "fault_type": "memory_leak",
+  "confidence": 0.5,
+  "summary": "Likely memory_leak on adservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks adservice first"
+   },
+   {
+    "ref": "log:log-00121",
+    "claim": "adservice: GC pause 899ms, heap still growing"
+   },
+   {
+    "ref": "log:log-00124",
+    "claim": "adservice: allocation failure, retrying after full GC"
+   },
+   {
+    "ref": "log:log-00129",
+    "claim": "adservice: allocation failure, retrying after full GC"
+   },
+   {
+    "ref": "rb:rb-memory_leak#symptoms",
+    "claim": "matching runbook: Memory leak leading to OOMKill"
+   }
+  ],
+  "fix_steps": [
+   "Follow the matching runbook."
+  ],
+  "risk_level": "medium",
+  "proposed_actions": [
+   {
+    "kind": "rollout_restart",
+    "target": "adservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "5012a9c00fbf4015bf63605b4134508f",
+  "number": "INC0010258",
+  "urgency": "2",
+  "impact": "3",
+  "affected_cis": 2
+ },
+ "time_to_ticket_s": 0.010281562805175781,
+ "proposed_actions": [
+  {
+   "kind": "rollout_restart",
+   "target": "adservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "0c92938d9031c1e0"
+}

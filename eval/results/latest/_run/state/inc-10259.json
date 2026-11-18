@@ -1,0 +1,127 @@
+{
+ "t_det": 162,
+ "ranking": [
+  [
+   "productcatalogservice",
+   0.5981281554032563
+  ],
+  [
+   "frontend",
+   0.056890615002121274
+  ],
+  [
+   "paymentservice",
+   0.05110659145077773
+  ],
+  [
+   "adservice",
+   0.04924593375136316
+  ],
+  [
+   "currencyservice",
+   0.04397427288437625
+  ],
+  [
+   "shippingservice",
+   0.039488051673702444
+  ],
+  [
+   "emailservice",
+   0.038643048985167266
+  ],
+  [
+   "cartservice",
+   0.03553609320729874
+  ],
+  [
+   "redis-cart",
+   0.03087024980137413
+  ],
+  [
+   "recommendationservice",
+   0.028146133956134516
+  ],
+  [
+   "checkoutservice",
+   0.027970853884428402
+  ]
+ ],
+ "incident_id": "inc-10259",
+ "t_received": 1794992178.7059314,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0008779279996815603,
+  "gather_context": 0.0029729960001532163,
+  "sanitize": 0.002128086000084295,
+  "retrieve": 0.0010585220002212736,
+  "diagnose": 0.00010781399987536133,
+  "open_ticket": 0.0070677259996045905,
+  "await_approval": 0.0009661700000833662
+ },
+ "burn_rate": 17.149242201520433,
+ "diagnosis": {
+  "root_cause_service": "productcatalogservice",
+  "fault_type": "cpu_hog",
+  "confidence": 0.5,
+  "summary": "Likely cpu_hog on productcatalogservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks productcatalogservice first"
+   },
+   {
+    "ref": "log:log-00169",
+    "claim": "productcatalogservice: handler exceeded deadline while waiting for worker thread"
+   },
+   {
+    "ref": "log:log-00172",
+    "claim": "productcatalogservice: handler exceeded deadline while waiting for worker thread"
+   },
+   {
+    "ref": "log:log-00174",
+    "claim": "productcatalogservice: handler exceeded deadline while waiting for worker thread"
+   },
+   {
+    "ref": "rb:rb-cpu_hog#diagnosis",
+    "claim": "matching runbook: CPU saturation / CPU hog"
+   }
+  ],
+  "fix_steps": [
+   "Check for a hot loop or runaway job in recent logs (blocked event loop, worker pool saturated, handler deadline exceeded).",
+   "Mitigate: scale out the deployment (`scale` action) or roll back if a recent release introduced the hot path.",
+   "Follow up: profile (pprof / async-profiler) and set realistic CPU requests/limits."
+  ],
+  "risk_level": "medium",
+  "proposed_actions": [
+   {
+    "kind": "scale",
+    "target": "productcatalogservice",
+    "replicas": 3
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "993f954a47fa425a9f0241a8ebb59517",
+  "number": "INC0010260",
+  "urgency": "1",
+  "impact": "1",
+  "affected_cis": 4
+ },
+ "time_to_ticket_s": 0.01339578628540039,
+ "proposed_actions": [
+  {
+   "kind": "scale",
+   "target": "productcatalogservice",
+   "replicas": 3
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "5b14246c71405929"
+}

@@ -1,0 +1,125 @@
+{
+ "t_det": 163,
+ "ranking": [
+  [
+   "shippingservice",
+   0.5388376516811382
+  ],
+  [
+   "checkoutservice",
+   0.07120414859162526
+  ],
+  [
+   "redis-cart",
+   0.05771118528011307
+  ],
+  [
+   "productcatalogservice",
+   0.05373480428686636
+  ],
+  [
+   "paymentservice",
+   0.047792509500831214
+  ],
+  [
+   "currencyservice",
+   0.04513899273897533
+  ],
+  [
+   "adservice",
+   0.04354479762811928
+  ],
+  [
+   "emailservice",
+   0.03921466338297214
+  ],
+  [
+   "frontend",
+   0.0390538678925003
+  ],
+  [
+   "cartservice",
+   0.03291500479306799
+  ],
+  [
+   "recommendationservice",
+   0.03085237422379089
+  ]
+ ],
+ "incident_id": "inc-10103",
+ "t_received": 1794992175.0913846,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0006200020002324891,
+  "gather_context": 0.0028063619997737987,
+  "sanitize": 0.003129522000108409,
+  "retrieve": 0.0008353070002158347,
+  "diagnose": 8.485399985147524e-05,
+  "open_ticket": 0.006900984999901993,
+  "await_approval": 0.0010202339999523247
+ },
+ "burn_rate": 21.52842719160761,
+ "diagnosis": {
+  "root_cause_service": "shippingservice",
+  "fault_type": "packet_loss",
+  "confidence": 0.5,
+  "summary": "Likely packet_loss on shippingservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks shippingservice first"
+   },
+   {
+    "ref": "log:log-00156",
+    "claim": "shippingservice: tcp retransmission on outbound connection"
+   },
+   {
+    "ref": "log:log-00161",
+    "claim": "shippingservice: connection reset by peer"
+   },
+   {
+    "ref": "log:log-00170",
+    "claim": "shippingservice: transport is closing; retrying"
+   },
+   {
+    "ref": "rb:rb-packet_loss#symptoms",
+    "claim": "matching runbook: Packet loss / connection resets"
+   }
+  ],
+  "fix_steps": [
+   "Follow the matching runbook."
+  ],
+  "risk_level": "medium",
+  "proposed_actions": [
+   {
+    "kind": "rollout_restart",
+    "target": "shippingservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "860114621df74e1b9ff7b2def4329f63",
+  "number": "INC0010104",
+  "urgency": "1",
+  "impact": "1",
+  "affected_cis": 3
+ },
+ "time_to_ticket_s": 0.013337373733520508,
+ "proposed_actions": [
+  {
+   "kind": "rollout_restart",
+   "target": "shippingservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "56006202a1a96987"
+}

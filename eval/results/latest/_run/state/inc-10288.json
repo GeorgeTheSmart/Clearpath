@@ -1,0 +1,125 @@
+{
+ "t_det": 165,
+ "ranking": [
+  [
+   "recommendationservice",
+   0.561017033126064
+  ],
+  [
+   "productcatalogservice",
+   0.08190027297474488
+  ],
+  [
+   "frontend",
+   0.06859191948139569
+  ],
+  [
+   "shippingservice",
+   0.05146779160231506
+  ],
+  [
+   "emailservice",
+   0.046263667332317376
+  ],
+  [
+   "cartservice",
+   0.04539964206417619
+  ],
+  [
+   "redis-cart",
+   0.040128312129114344
+  ],
+  [
+   "paymentservice",
+   0.031654842247347645
+  ],
+  [
+   "adservice",
+   0.030395659786929746
+  ],
+  [
+   "currencyservice",
+   0.02643468064908632
+  ],
+  [
+   "checkoutservice",
+   0.016746178606508767
+  ]
+ ],
+ "incident_id": "inc-10288",
+ "t_received": 1794992179.390058,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0008706469998287503,
+  "gather_context": 0.002668542000265006,
+  "sanitize": 0.0031571790000270994,
+  "retrieve": 0.0009438619999855291,
+  "diagnose": 9.798900009627687e-05,
+  "open_ticket": 0.005037582000113616,
+  "await_approval": 0.0008238539999183558
+ },
+ "burn_rate": 28.000035089108692,
+ "diagnosis": {
+  "root_cause_service": "recommendationservice",
+  "fault_type": "packet_loss",
+  "confidence": 0.5,
+  "summary": "Likely packet_loss on recommendationservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks recommendationservice first"
+   },
+   {
+    "ref": "log:log-00157",
+    "claim": "recommendationservice: connection reset by peer"
+   },
+   {
+    "ref": "log:log-00164",
+    "claim": "recommendationservice: transport is closing; retrying"
+   },
+   {
+    "ref": "log:log-00166",
+    "claim": "recommendationservice: transport is closing; retrying"
+   },
+   {
+    "ref": "rb:rb-packet_loss#symptoms",
+    "claim": "matching runbook: Packet loss / connection resets"
+   }
+  ],
+  "fix_steps": [
+   "Follow the matching runbook."
+  ],
+  "risk_level": "medium",
+  "proposed_actions": [
+   {
+    "kind": "rollout_restart",
+    "target": "recommendationservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "bb2afbcf0d94456f8564479b5bf6c757",
+  "number": "INC0010289",
+  "urgency": "1",
+  "impact": "1",
+  "affected_cis": 3
+ },
+ "time_to_ticket_s": 0.011960983276367188,
+ "proposed_actions": [
+  {
+   "kind": "rollout_restart",
+   "target": "recommendationservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "d77252284f877193"
+}

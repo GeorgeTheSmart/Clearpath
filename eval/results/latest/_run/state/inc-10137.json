@@ -1,0 +1,127 @@
+{
+ "t_det": 164,
+ "ranking": [
+  [
+   "paymentservice",
+   0.4678616625500114
+  ],
+  [
+   "productcatalogservice",
+   0.11914918529607196
+  ],
+  [
+   "redis-cart",
+   0.08204362220268918
+  ],
+  [
+   "emailservice",
+   0.06348187369643762
+  ],
+  [
+   "currencyservice",
+   0.05486758680644464
+  ],
+  [
+   "checkoutservice",
+   0.05162920576742583
+  ],
+  [
+   "adservice",
+   0.0435914092313425
+  ],
+  [
+   "shippingservice",
+   0.04189332533704422
+  ],
+  [
+   "frontend",
+   0.027938820465951333
+  ],
+  [
+   "recommendationservice",
+   0.025991150841572563
+  ],
+  [
+   "cartservice",
+   0.021552157805008687
+  ]
+ ],
+ "incident_id": "inc-10137",
+ "t_received": 1794992176.0016146,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.000659561000247777,
+  "gather_context": 0.0026026949999504723,
+  "sanitize": 0.00225642199984577,
+  "retrieve": 0.0011008040000888286,
+  "diagnose": 0.00018661400008568307,
+  "open_ticket": 0.004440831000010803,
+  "await_approval": 0.0007392819998131017
+ },
+ "burn_rate": 2.4673074622986078,
+ "diagnosis": {
+  "root_cause_service": "paymentservice",
+  "fault_type": "cpu_hog",
+  "confidence": 0.5,
+  "summary": "Likely cpu_hog on paymentservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks paymentservice first"
+   },
+   {
+    "ref": "log:log-00151",
+    "claim": "paymentservice: throttling detected: cfs_throttled_periods increased"
+   },
+   {
+    "ref": "log:log-00153",
+    "claim": "paymentservice: handler exceeded deadline while waiting for worker thread"
+   },
+   {
+    "ref": "log:log-00156",
+    "claim": "paymentservice: event loop blocked for 933ms"
+   },
+   {
+    "ref": "rb:rb-cpu_hog#diagnosis",
+    "claim": "matching runbook: CPU saturation / CPU hog"
+   }
+  ],
+  "fix_steps": [
+   "Check for a hot loop or runaway job in recent logs (blocked event loop, worker pool saturated, handler deadline exceeded).",
+   "Mitigate: scale out the deployment (`scale` action) or roll back if a recent release introduced the hot path.",
+   "Follow up: profile (pprof / async-profiler) and set realistic CPU requests/limits."
+  ],
+  "risk_level": "medium",
+  "proposed_actions": [
+   {
+    "kind": "scale",
+    "target": "paymentservice",
+    "replicas": 3
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "be1785f88e6a4a5cbb11a80db7239cb5",
+  "number": "INC0010138",
+  "urgency": "2",
+  "impact": "3",
+  "affected_cis": 2
+ },
+ "time_to_ticket_s": 0.010406970977783203,
+ "proposed_actions": [
+  {
+   "kind": "scale",
+   "target": "paymentservice",
+   "replicas": 3
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "cebb81f3e38fa7dd"
+}

@@ -1,0 +1,113 @@
+{
+ "t_det": 150,
+ "ranking": [
+  [
+   "shippingservice",
+   0.4057237319117798
+  ],
+  [
+   "productcatalogservice",
+   0.31348974904266497
+  ],
+  [
+   "checkoutservice",
+   0.07606612770767512
+  ],
+  [
+   "frontend",
+   0.061893263273678216
+  ],
+  [
+   "currencyservice",
+   0.026024406358065067
+  ],
+  [
+   "emailservice",
+   0.024927178850162428
+  ],
+  [
+   "cartservice",
+   0.022531306292472665
+  ],
+  [
+   "adservice",
+   0.0218857056033707
+  ],
+  [
+   "redis-cart",
+   0.02046832321057089
+  ],
+  [
+   "paymentservice",
+   0.019165892659481428
+  ],
+  [
+   "recommendationservice",
+   0.007824315090078797
+  ]
+ ],
+ "incident_id": "inc-10133",
+ "t_received": 1794992175.885048,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0011797219999607478,
+  "gather_context": 0.004217859000164026,
+  "sanitize": 0.0023682129999542667,
+  "retrieve": 0.0009946050004145945,
+  "diagnose": 0.00011993999987680581,
+  "open_ticket": 0.006182120999710605,
+  "await_approval": 0.0011346530000082566
+ },
+ "burn_rate": 139.44531184724457,
+ "diagnosis": {
+  "root_cause_service": "shippingservice",
+  "fault_type": "crash_loop",
+  "confidence": 0.5,
+  "summary": "Likely crash_loop on shippingservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks shippingservice first"
+   },
+   {
+    "ref": "rb:rb-crash_loop#symptoms",
+    "claim": "matching runbook: Crash loop (CrashLoopBackOff)"
+   }
+  ],
+  "fix_steps": [
+   "Follow the matching runbook."
+  ],
+  "risk_level": "high",
+  "proposed_actions": [
+   {
+    "kind": "rollback",
+    "target": "shippingservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 2,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "52d5ddb0ff7648d196233d0b37ff8187",
+  "number": "INC0010134",
+  "urgency": "1",
+  "impact": "1",
+  "affected_cis": 3
+ },
+ "time_to_ticket_s": 0.014037847518920898,
+ "proposed_actions": [
+  {
+   "kind": "rollback",
+   "target": "shippingservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "e3873db1c72a2f5f"
+}

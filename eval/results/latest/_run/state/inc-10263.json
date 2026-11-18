@@ -1,0 +1,113 @@
+{
+ "t_det": 143,
+ "ranking": [
+  [
+   "paymentservice",
+   0.6166984154390395
+  ],
+  [
+   "checkoutservice",
+   0.1353577724216501
+  ],
+  [
+   "currencyservice",
+   0.036275665888487824
+  ],
+  [
+   "productcatalogservice",
+   0.034607220063565064
+  ],
+  [
+   "frontend",
+   0.032578746213389784
+  ],
+  [
+   "redis-cart",
+   0.029391479596644905
+  ],
+  [
+   "emailservice",
+   0.027074788783238955
+  ],
+  [
+   "shippingservice",
+   0.02639895026501097
+  ],
+  [
+   "cartservice",
+   0.02380788987503847
+  ],
+  [
+   "adservice",
+   0.020498798570895416
+  ],
+  [
+   "recommendationservice",
+   0.017310272883038866
+  ]
+ ],
+ "incident_id": "inc-10263",
+ "t_received": 1794992178.8139644,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0007927350002319145,
+  "gather_context": 0.002809701999922254,
+  "sanitize": 0.0025849720000223897,
+  "retrieve": 0.0007986609998624772,
+  "diagnose": 8.652199994685361e-05,
+  "open_ticket": 0.004797676000180218,
+  "await_approval": 0.0009023110001180612
+ },
+ "burn_rate": 73.40929504660421,
+ "diagnosis": {
+  "root_cause_service": "paymentservice",
+  "fault_type": "dependency_down",
+  "confidence": 0.5,
+  "summary": "Likely dependency_down on paymentservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks paymentservice first"
+   },
+   {
+    "ref": "rb:rb-dependency_down#symptoms",
+    "claim": "matching runbook: Downstream dependency down"
+   }
+  ],
+  "fix_steps": [
+   "Follow the matching runbook."
+  ],
+  "risk_level": "high",
+  "proposed_actions": [
+   {
+    "kind": "rollout_restart",
+    "target": "paymentservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 2,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "54eac1ac9f1d48fbbf4612fc94ef54fc",
+  "number": "INC0010264",
+  "urgency": "1",
+  "impact": "1",
+  "affected_cis": 2
+ },
+ "time_to_ticket_s": 0.011025667190551758,
+ "proposed_actions": [
+  {
+   "kind": "rollout_restart",
+   "target": "paymentservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "d9f94dca5c450997"
+}

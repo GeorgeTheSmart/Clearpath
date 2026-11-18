@@ -1,0 +1,125 @@
+{
+ "t_det": 179,
+ "ranking": [
+  [
+   "currencyservice",
+   0.500149796725713
+  ],
+  [
+   "redis-cart",
+   0.06996461933147026
+  ],
+  [
+   "productcatalogservice",
+   0.06755642728405613
+  ],
+  [
+   "cartservice",
+   0.0581419004018046
+  ],
+  [
+   "frontend",
+   0.04816736957903375
+  ],
+  [
+   "shippingservice",
+   0.048161432937558986
+  ],
+  [
+   "adservice",
+   0.04776870741558034
+  ],
+  [
+   "recommendationservice",
+   0.04689190027546561
+  ],
+  [
+   "checkoutservice",
+   0.041207431618823544
+  ],
+  [
+   "paymentservice",
+   0.04023498239427824
+  ],
+  [
+   "emailservice",
+   0.031755432036215565
+  ]
+ ],
+ "incident_id": "inc-10158",
+ "t_received": 1794992176.4646025,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0006689990000268153,
+  "gather_context": 0.0031845989997236757,
+  "sanitize": 0.003026752999630844,
+  "retrieve": 0.001108841000132088,
+  "diagnose": 0.00010819699991770904,
+  "open_ticket": 0.00509233899992978,
+  "await_approval": 0.0008106320001388667
+ },
+ "burn_rate": 43.397761811525676,
+ "diagnosis": {
+  "root_cause_service": "currencyservice",
+  "fault_type": "packet_loss",
+  "confidence": 0.5,
+  "summary": "Likely packet_loss on currencyservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks currencyservice first"
+   },
+   {
+    "ref": "log:log-00177",
+    "claim": "currencyservice: transport is closing; retrying"
+   },
+   {
+    "ref": "log:log-00182",
+    "claim": "currencyservice: tcp retransmission on outbound connection"
+   },
+   {
+    "ref": "log:log-00184",
+    "claim": "currencyservice: request timeout after 1822ms"
+   },
+   {
+    "ref": "rb:rb-packet_loss#symptoms",
+    "claim": "matching runbook: Packet loss / connection resets"
+   }
+  ],
+  "fix_steps": [
+   "Follow the matching runbook."
+  ],
+  "risk_level": "medium",
+  "proposed_actions": [
+   {
+    "kind": "rollout_restart",
+    "target": "currencyservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "ebda244f17104e65a733992961f90763",
+  "number": "INC0010159",
+  "urgency": "1",
+  "impact": "1",
+  "affected_cis": 3
+ },
+ "time_to_ticket_s": 0.01242208480834961,
+ "proposed_actions": [
+  {
+   "kind": "rollout_restart",
+   "target": "currencyservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "30f0f6a7a240b7b4"
+}

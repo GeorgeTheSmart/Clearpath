@@ -1,0 +1,127 @@
+{
+ "t_det": 175,
+ "ranking": [
+  [
+   "adservice",
+   0.5698352006842485
+  ],
+  [
+   "frontend",
+   0.07919403435870309
+  ],
+  [
+   "redis-cart",
+   0.05592742150327561
+  ],
+  [
+   "productcatalogservice",
+   0.05133760922155392
+  ],
+  [
+   "emailservice",
+   0.043482909855476475
+  ],
+  [
+   "paymentservice",
+   0.03933130387078005
+  ],
+  [
+   "currencyservice",
+   0.03897688157790806
+  ],
+  [
+   "shippingservice",
+   0.03854774906541498
+  ],
+  [
+   "recommendationservice",
+   0.03235930867569699
+  ],
+  [
+   "cartservice",
+   0.028391854619879465
+  ],
+  [
+   "checkoutservice",
+   0.022615726567062937
+  ]
+ ],
+ "incident_id": "inc-10237",
+ "t_received": 1794992178.241413,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0007345130002249789,
+  "gather_context": 0.002610115000152291,
+  "sanitize": 0.002212768000390497,
+  "retrieve": 0.0009162569999716652,
+  "diagnose": 9.422300036021625e-05,
+  "open_ticket": 0.004672438999932638,
+  "await_approval": 0.0011327629999868805
+ },
+ "burn_rate": 56.79711362954199,
+ "diagnosis": {
+  "root_cause_service": "adservice",
+  "fault_type": "bad_config",
+  "confidence": 0.5,
+  "summary": "Likely bad_config on adservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks adservice first"
+   },
+   {
+    "ref": "log:log-00165",
+    "claim": "adservice: config validation error: REDIS_ADDR must be set"
+   },
+   {
+    "ref": "log:log-00175",
+    "claim": "adservice: failed to parse env var PORT: invalid syntax"
+   },
+   {
+    "ref": "log:log-00178",
+    "claim": "adservice: invalid configuration: missing required key PRODUCT_ID"
+   },
+   {
+    "ref": "rb:rb-bad_config#diagnosis",
+    "claim": "matching runbook: Bad configuration or environment variable"
+   }
+  ],
+  "fix_steps": [
+   "Find the key named in 'invalid configuration', 'missing required key' or parse errors.",
+   "Mitigate: revert the ConfigMap and rollout restart, or roll back the deployment revision.",
+   "Follow up: validate config in CI and use a schema."
+  ],
+  "risk_level": "high",
+  "proposed_actions": [
+   {
+    "kind": "rollback",
+    "target": "adservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "1e7da58a33994cb6b683299b985b61d7",
+  "number": "INC0010238",
+  "urgency": "1",
+  "impact": "1",
+  "affected_cis": 2
+ },
+ "time_to_ticket_s": 0.010101318359375,
+ "proposed_actions": [
+  {
+   "kind": "rollback",
+   "target": "adservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "8a2d22270a124b9b"
+}

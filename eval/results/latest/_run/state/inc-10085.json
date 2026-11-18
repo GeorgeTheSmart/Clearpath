@@ -1,0 +1,127 @@
+{
+ "t_det": 141,
+ "ranking": [
+  [
+   "paymentservice",
+   0.5354687486099234
+  ],
+  [
+   "checkoutservice",
+   0.12204090674940643
+  ],
+  [
+   "redis-cart",
+   0.051416059539775544
+  ],
+  [
+   "productcatalogservice",
+   0.051306173458511656
+  ],
+  [
+   "currencyservice",
+   0.04725789223094428
+  ],
+  [
+   "adservice",
+   0.03687869186607588
+  ],
+  [
+   "emailservice",
+   0.0367221591807369
+  ],
+  [
+   "cartservice",
+   0.03373558949362158
+  ],
+  [
+   "frontend",
+   0.03367585213223885
+  ],
+  [
+   "shippingservice",
+   0.027971855349164017
+  ],
+  [
+   "recommendationservice",
+   0.023526071389601604
+  ]
+ ],
+ "incident_id": "inc-10085",
+ "t_received": 1794992174.6953378,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0006098609997025051,
+  "gather_context": 0.002718608000122913,
+  "sanitize": 0.002817674000198167,
+  "retrieve": 0.0010601620001580159,
+  "diagnose": 0.00010439800007588929,
+  "open_ticket": 0.004518841999924916,
+  "await_approval": 0.0005813450002278842
+ },
+ "burn_rate": 19.511102111501838,
+ "diagnosis": {
+  "root_cause_service": "paymentservice",
+  "fault_type": "bad_config",
+  "confidence": 0.5,
+  "summary": "Likely bad_config on paymentservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks paymentservice first"
+   },
+   {
+    "ref": "log:log-00145",
+    "claim": "paymentservice: config validation error: PORT must be set"
+   },
+   {
+    "ref": "log:log-00147",
+    "claim": "paymentservice: config validation error: REDIS_ADDR must be set"
+   },
+   {
+    "ref": "log:log-00149",
+    "claim": "paymentservice: config validation error: PORT must be set"
+   },
+   {
+    "ref": "rb:rb-bad_config#diagnosis",
+    "claim": "matching runbook: Bad configuration or environment variable"
+   }
+  ],
+  "fix_steps": [
+   "Find the key named in 'invalid configuration', 'missing required key' or parse errors.",
+   "Mitigate: revert the ConfigMap and rollout restart, or roll back the deployment revision.",
+   "Follow up: validate config in CI and use a schema."
+  ],
+  "risk_level": "high",
+  "proposed_actions": [
+   {
+    "kind": "rollback",
+    "target": "paymentservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "9f618638db7a455d92403d7dfb115bfd",
+  "number": "INC0010086",
+  "urgency": "1",
+  "impact": "1",
+  "affected_cis": 2
+ },
+ "time_to_ticket_s": 0.011220693588256836,
+ "proposed_actions": [
+  {
+   "kind": "rollback",
+   "target": "paymentservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "7f5b9c34a9a852c1"
+}

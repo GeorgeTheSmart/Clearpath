@@ -1,0 +1,125 @@
+{
+ "t_det": 146,
+ "ranking": [
+  [
+   "paymentservice",
+   0.5511007242079355
+  ],
+  [
+   "emailservice",
+   0.14922490618435288
+  ],
+  [
+   "checkoutservice",
+   0.08063966110756254
+  ],
+  [
+   "productcatalogservice",
+   0.043318965918627036
+  ],
+  [
+   "shippingservice",
+   0.03353198478342975
+  ],
+  [
+   "adservice",
+   0.028956506099131148
+  ],
+  [
+   "frontend",
+   0.026877201226866328
+  ],
+  [
+   "currencyservice",
+   0.026550812045905054
+  ],
+  [
+   "redis-cart",
+   0.02369108800661411
+  ],
+  [
+   "recommendationservice",
+   0.01848102813117673
+  ],
+  [
+   "cartservice",
+   0.01762712228839894
+  ]
+ ],
+ "incident_id": "inc-10060",
+ "t_received": 1794992174.141294,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.000589610000133689,
+  "gather_context": 0.003251729000112391,
+  "sanitize": 0.001739090000228316,
+  "retrieve": 0.0010473759998603782,
+  "diagnose": 9.99630001388141e-05,
+  "open_ticket": 0.004612596999777452,
+  "await_approval": 0.0006163340003695339
+ },
+ "burn_rate": 2.605955828498915,
+ "diagnosis": {
+  "root_cause_service": "paymentservice",
+  "fault_type": "memory_leak",
+  "confidence": 0.5,
+  "summary": "Likely memory_leak on paymentservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks paymentservice first"
+   },
+   {
+    "ref": "log:log-00143",
+    "claim": "paymentservice: allocation failure, retrying after full GC"
+   },
+   {
+    "ref": "log:log-00145",
+    "claim": "paymentservice: container restarted: OOMKilled (exit code 137)"
+   },
+   {
+    "ref": "log:log-00150",
+    "claim": "paymentservice: GC pause 4262ms, heap still growing"
+   },
+   {
+    "ref": "rb:rb-memory_leak#symptoms",
+    "claim": "matching runbook: Memory leak leading to OOMKill"
+   }
+  ],
+  "fix_steps": [
+   "Follow the matching runbook."
+  ],
+  "risk_level": "medium",
+  "proposed_actions": [
+   {
+    "kind": "rollout_restart",
+    "target": "paymentservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "bdb31cf180904c96a5af87b45ac7a477",
+  "number": "INC0010061",
+  "urgency": "2",
+  "impact": "3",
+  "affected_cis": 2
+ },
+ "time_to_ticket_s": 0.01070547103881836,
+ "proposed_actions": [
+  {
+   "kind": "rollout_restart",
+   "target": "paymentservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "f40b50a895ed32a5"
+}

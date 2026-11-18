@@ -1,0 +1,127 @@
+{
+ "t_det": 169,
+ "ranking": [
+  [
+   "paymentservice",
+   0.5779416304203298
+  ],
+  [
+   "checkoutservice",
+   0.105840773642626
+  ],
+  [
+   "productcatalogservice",
+   0.04729445724120199
+  ],
+  [
+   "emailservice",
+   0.040171382851315156
+  ],
+  [
+   "redis-cart",
+   0.04007407133481539
+  ],
+  [
+   "shippingservice",
+   0.03917939795210546
+  ],
+  [
+   "adservice",
+   0.03225238843397134
+  ],
+  [
+   "cartservice",
+   0.031394179212898346
+  ],
+  [
+   "frontend",
+   0.030882443487180635
+  ],
+  [
+   "recommendationservice",
+   0.030163914254353406
+  ],
+  [
+   "currencyservice",
+   0.024805361169202317
+  ]
+ ],
+ "incident_id": "inc-10299",
+ "t_received": 1794992179.6319466,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0013151399998605484,
+  "gather_context": 0.003655872999843268,
+  "sanitize": 0.0035648869998112787,
+  "retrieve": 0.0013149989999874379,
+  "diagnose": 0.000126491999708378,
+  "open_ticket": 0.005949032999978954,
+  "await_approval": 0.0015314090001083969
+ },
+ "burn_rate": 23.94208398084684,
+ "diagnosis": {
+  "root_cause_service": "paymentservice",
+  "fault_type": "bad_deploy",
+  "confidence": 0.5,
+  "summary": "Likely bad_deploy on paymentservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks paymentservice first"
+   },
+   {
+    "ref": "log:log-00158",
+    "claim": "paymentservice: 500 Internal Server Error returned to caller"
+   },
+   {
+    "ref": "log:log-00165",
+    "claim": "paymentservice: unhandled exception in handler: KeyError 'REDIS_ADDR'"
+   },
+   {
+    "ref": "log:log-00172",
+    "claim": "paymentservice: TypeError: cannot read property of undefined"
+   },
+   {
+    "ref": "rb:rb-bad_deploy#diagnosis",
+    "claim": "matching runbook: Bad deploy (regression in a new release)"
+   }
+  ],
+  "fix_steps": [
+   "Check for new exception types (KeyError, TypeError, assertion failures) after the rollout.",
+   "Mitigate: roll back to the previous revision (`rollback` action).",
+   "Follow up: add a canary stage with automated analysis before full rollout."
+  ],
+  "risk_level": "high",
+  "proposed_actions": [
+   {
+    "kind": "rollback",
+    "target": "paymentservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "7b6c36b7ceea4975aacb981e424b39a6",
+  "number": "INC0010300",
+  "urgency": "1",
+  "impact": "1",
+  "affected_cis": 2
+ },
+ "time_to_ticket_s": 0.014553070068359375,
+ "proposed_actions": [
+  {
+   "kind": "rollback",
+   "target": "paymentservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "85012e1f4f3ec7ae"
+}

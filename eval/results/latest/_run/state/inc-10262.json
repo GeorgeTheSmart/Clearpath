@@ -1,0 +1,127 @@
+{
+ "t_det": 153,
+ "ranking": [
+  [
+   "shippingservice",
+   0.6780102905095577
+  ],
+  [
+   "recommendationservice",
+   0.045949729330297374
+  ],
+  [
+   "currencyservice",
+   0.03657257021986008
+  ],
+  [
+   "emailservice",
+   0.03596781231660054
+  ],
+  [
+   "productcatalogservice",
+   0.035328103312499436
+  ],
+  [
+   "checkoutservice",
+   0.03179925056146886
+  ],
+  [
+   "paymentservice",
+   0.031568578950319476
+  ],
+  [
+   "cartservice",
+   0.02972328785197071
+  ],
+  [
+   "redis-cart",
+   0.026928546912105732
+  ],
+  [
+   "frontend",
+   0.025190293091744188
+  ],
+  [
+   "adservice",
+   0.022961536943575986
+  ]
+ ],
+ "incident_id": "inc-10262",
+ "t_received": 1794992178.791568,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0014752810002391925,
+  "gather_context": 0.003996313999778067,
+  "sanitize": 0.0023128900002120645,
+  "retrieve": 0.0013094920000185084,
+  "diagnose": 0.00014077700006964733,
+  "open_ticket": 0.005523549000372441,
+  "await_approval": 0.0007911560001048201
+ },
+ "burn_rate": 8.609163511877853,
+ "diagnosis": {
+  "root_cause_service": "shippingservice",
+  "fault_type": "bad_deploy",
+  "confidence": 0.5,
+  "summary": "Likely bad_deploy on shippingservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks shippingservice first"
+   },
+   {
+    "ref": "log:log-00158",
+    "claim": "shippingservice: request timeout after 889ms"
+   },
+   {
+    "ref": "log:log-00164",
+    "claim": "shippingservice: transport is closing; retrying"
+   },
+   {
+    "ref": "log:log-00168",
+    "claim": "shippingservice: request timeout after 4726ms"
+   },
+   {
+    "ref": "rb:rb-bad_deploy#diagnosis",
+    "claim": "matching runbook: Bad deploy (regression in a new release)"
+   }
+  ],
+  "fix_steps": [
+   "Check for new exception types (KeyError, TypeError, assertion failures) after the rollout.",
+   "Mitigate: roll back to the previous revision (`rollback` action).",
+   "Follow up: add a canary stage with automated analysis before full rollout."
+  ],
+  "risk_level": "high",
+  "proposed_actions": [
+   {
+    "kind": "rollback",
+    "target": "shippingservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "f327860f0e604eab972e57657acbbe7e",
+  "number": "INC0010263",
+  "urgency": "2",
+  "impact": "2",
+  "affected_cis": 3
+ },
+ "time_to_ticket_s": 0.013986587524414062,
+ "proposed_actions": [
+  {
+   "kind": "rollback",
+   "target": "shippingservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "07423461748a9d34"
+}

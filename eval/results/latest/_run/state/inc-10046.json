@@ -1,0 +1,125 @@
+{
+ "t_det": 124,
+ "ranking": [
+  [
+   "emailservice",
+   0.5505329726096423
+  ],
+  [
+   "checkoutservice",
+   0.08058470506933627
+  ],
+  [
+   "productcatalogservice",
+   0.06789105471486188
+  ],
+  [
+   "shippingservice",
+   0.05099762713599395
+  ],
+  [
+   "redis-cart",
+   0.04917576509922814
+  ],
+  [
+   "adservice",
+   0.04370194753125128
+  ],
+  [
+   "cartservice",
+   0.039932642910090896
+  ],
+  [
+   "currencyservice",
+   0.03853908023991666
+  ],
+  [
+   "frontend",
+   0.032081190273990666
+  ],
+  [
+   "paymentservice",
+   0.030940967887789717
+  ],
+  [
+   "recommendationservice",
+   0.015622046527898104
+  ]
+ ],
+ "incident_id": "inc-10046",
+ "t_received": 1794992173.792216,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0006402599997272773,
+  "gather_context": 0.0027066500001637905,
+  "sanitize": 0.002588249999917025,
+  "retrieve": 0.0009012010000333248,
+  "diagnose": 0.00010120600018126424,
+  "open_ticket": 0.005477400000017951,
+  "await_approval": 0.0006492160000561853
+ },
+ "burn_rate": 5.634891207945498,
+ "diagnosis": {
+  "root_cause_service": "emailservice",
+  "fault_type": "packet_loss",
+  "confidence": 0.5,
+  "summary": "Likely packet_loss on emailservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks emailservice first"
+   },
+   {
+    "ref": "log:log-00154",
+    "claim": "emailservice: connection reset by peer"
+   },
+   {
+    "ref": "log:log-00157",
+    "claim": "emailservice: tcp retransmission on outbound connection"
+   },
+   {
+    "ref": "log:log-00162",
+    "claim": "emailservice: transport is closing; retrying"
+   },
+   {
+    "ref": "rb:rb-packet_loss#symptoms",
+    "claim": "matching runbook: Packet loss / connection resets"
+   }
+  ],
+  "fix_steps": [
+   "Follow the matching runbook."
+  ],
+  "risk_level": "medium",
+  "proposed_actions": [
+   {
+    "kind": "rollout_restart",
+    "target": "emailservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "5a983bb29ecd4e16b5403cce3625f7e7",
+  "number": "INC0010047",
+  "urgency": "2",
+  "impact": "3",
+  "affected_cis": 2
+ },
+ "time_to_ticket_s": 0.011699676513671875,
+ "proposed_actions": [
+  {
+   "kind": "rollout_restart",
+   "target": "emailservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "292bb92faedfff10"
+}

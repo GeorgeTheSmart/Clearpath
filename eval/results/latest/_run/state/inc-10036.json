@@ -1,0 +1,127 @@
+{
+ "t_det": 137,
+ "ranking": [
+  [
+   "frontend",
+   0.2953240716943283
+  ],
+  [
+   "productcatalogservice",
+   0.12014606243446806
+  ],
+  [
+   "paymentservice",
+   0.08823452278200294
+  ],
+  [
+   "redis-cart",
+   0.08812036904446904
+  ],
+  [
+   "shippingservice",
+   0.0776975929780755
+  ],
+  [
+   "currencyservice",
+   0.0750147558590685
+  ],
+  [
+   "adservice",
+   0.07028113818247075
+  ],
+  [
+   "emailservice",
+   0.06818255174590171
+  ],
+  [
+   "cartservice",
+   0.05761235691112414
+  ],
+  [
+   "checkoutservice",
+   0.033446132463040346
+  ],
+  [
+   "recommendationservice",
+   0.02594044590505082
+  ]
+ ],
+ "incident_id": "inc-10036",
+ "t_received": 1794992173.5448341,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0005417920001491439,
+  "gather_context": 0.002418924999801675,
+  "sanitize": 0.0015368220001619193,
+  "retrieve": 0.00091859599979216,
+  "diagnose": 9.772599969437579e-05,
+  "open_ticket": 0.008061706999797025,
+  "await_approval": 0.0005450099997688085
+ },
+ "burn_rate": 162.86863177130743,
+ "diagnosis": {
+  "root_cause_service": "frontend",
+  "fault_type": "bad_config",
+  "confidence": 0.5,
+  "summary": "Likely bad_config on frontend (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks frontend first"
+   },
+   {
+    "ref": "log:log-00152",
+    "claim": "frontend: failed to parse env var PRODUCT_ID: invalid syntax"
+   },
+   {
+    "ref": "log:log-00154",
+    "claim": "frontend: invalid configuration: missing required key sku_42"
+   },
+   {
+    "ref": "log:log-00156",
+    "claim": "frontend: failed to parse env var REDIS_ADDR: invalid syntax"
+   },
+   {
+    "ref": "rb:rb-bad_config#diagnosis",
+    "claim": "matching runbook: Bad configuration or environment variable"
+   }
+  ],
+  "fix_steps": [
+   "Find the key named in 'invalid configuration', 'missing required key' or parse errors.",
+   "Mitigate: revert the ConfigMap and rollout restart, or roll back the deployment revision.",
+   "Follow up: validate config in CI and use a schema."
+  ],
+  "risk_level": "high",
+  "proposed_actions": [
+   {
+    "kind": "rollback",
+    "target": "frontend",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "424cdeeea2034603b813624bfbd866e8",
+  "number": "INC0010037",
+  "urgency": "1",
+  "impact": "1",
+  "affected_cis": 8
+ },
+ "time_to_ticket_s": 0.01306009292602539,
+ "proposed_actions": [
+  {
+   "kind": "rollback",
+   "target": "frontend",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "809782efb1154e80"
+}

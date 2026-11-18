@@ -1,0 +1,113 @@
+{
+ "t_det": 122,
+ "ranking": [
+  [
+   "emailservice",
+   0.528686987479702
+  ],
+  [
+   "checkoutservice",
+   0.07696848828819143
+  ],
+  [
+   "frontend",
+   0.06802729728764849
+  ],
+  [
+   "cartservice",
+   0.06433824383120364
+  ],
+  [
+   "adservice",
+   0.05230047550174755
+  ],
+  [
+   "productcatalogservice",
+   0.04806127930740813
+  ],
+  [
+   "paymentservice",
+   0.040402945656455566
+  ],
+  [
+   "shippingservice",
+   0.035526767895561105
+  ],
+  [
+   "currencyservice",
+   0.03222015859638443
+  ],
+  [
+   "redis-cart",
+   0.028563358448553886
+  ],
+  [
+   "recommendationservice",
+   0.024903997707143792
+  ]
+ ],
+ "incident_id": "inc-10150",
+ "t_received": 1794992176.2877102,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0007592760002808063,
+  "gather_context": 0.0029349619999265997,
+  "sanitize": 0.0020076880000488018,
+  "retrieve": 0.0006799140001021442,
+  "diagnose": 7.443200001944206e-05,
+  "open_ticket": 0.0041540819997862855,
+  "await_approval": 0.0006296780002230662
+ },
+ "burn_rate": 62.625882149051435,
+ "diagnosis": {
+  "root_cause_service": "emailservice",
+  "fault_type": "crash_loop",
+  "confidence": 0.5,
+  "summary": "Likely crash_loop on emailservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks emailservice first"
+   },
+   {
+    "ref": "rb:rb-crash_loop#symptoms",
+    "claim": "matching runbook: Crash loop (CrashLoopBackOff)"
+   }
+  ],
+  "fix_steps": [
+   "Follow the matching runbook."
+  ],
+  "risk_level": "high",
+  "proposed_actions": [
+   {
+    "kind": "rollback",
+    "target": "emailservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 2,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "cc59e592d8b242f2aebf1b957687f20e",
+  "number": "INC0010151",
+  "urgency": "1",
+  "impact": "1",
+  "affected_cis": 2
+ },
+ "time_to_ticket_s": 0.009910345077514648,
+ "proposed_actions": [
+  {
+   "kind": "rollback",
+   "target": "emailservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "751080246881f944"
+}

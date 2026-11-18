@@ -1,0 +1,125 @@
+{
+ "t_det": 150,
+ "ranking": [
+  [
+   "cartservice",
+   0.5265496287088344
+  ],
+  [
+   "frontend",
+   0.18358889179621002
+  ],
+  [
+   "redis-cart",
+   0.05145664247768407
+  ],
+  [
+   "checkoutservice",
+   0.04451162360514391
+  ],
+  [
+   "adservice",
+   0.032390973874843146
+  ],
+  [
+   "productcatalogservice",
+   0.03182365436563036
+  ],
+  [
+   "currencyservice",
+   0.030276357045500343
+  ],
+  [
+   "shippingservice",
+   0.029464367665984485
+  ],
+  [
+   "paymentservice",
+   0.024634328415963847
+  ],
+  [
+   "emailservice",
+   0.02449390837206115
+  ],
+  [
+   "recommendationservice",
+   0.020809623672144326
+  ]
+ ],
+ "incident_id": "inc-10020",
+ "t_received": 1794992173.1670237,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0006916379998074262,
+  "gather_context": 0.0036903179998262203,
+  "sanitize": 0.0028261390002626285,
+  "retrieve": 0.0017084920000343118,
+  "diagnose": 0.0001470410002184508,
+  "open_ticket": 0.006261479999920994,
+  "await_approval": 0.0006192589999045595
+ },
+ "burn_rate": 2.053186340376983,
+ "diagnosis": {
+  "root_cause_service": "cartservice",
+  "fault_type": "memory_leak",
+  "confidence": 0.5,
+  "summary": "Likely memory_leak on cartservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks cartservice first"
+   },
+   {
+    "ref": "log:log-00145",
+    "claim": "cartservice: allocation failure, retrying after full GC"
+   },
+   {
+    "ref": "log:log-00150",
+    "claim": "cartservice: allocation failure, retrying after full GC"
+   },
+   {
+    "ref": "log:log-00151",
+    "claim": "cartservice: container restarted: OOMKilled (exit code 137)"
+   },
+   {
+    "ref": "rb:rb-memory_leak#symptoms",
+    "claim": "matching runbook: Memory leak leading to OOMKill"
+   }
+  ],
+  "fix_steps": [
+   "Follow the matching runbook."
+  ],
+  "risk_level": "medium",
+  "proposed_actions": [
+   {
+    "kind": "rollout_restart",
+    "target": "cartservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "dd86924bd2b24d0099c2eba4c7bfbbb0",
+  "number": "INC0010021",
+  "urgency": "2",
+  "impact": "3",
+  "affected_cis": 4
+ },
+ "time_to_ticket_s": 0.014698505401611328,
+ "proposed_actions": [
+  {
+   "kind": "rollout_restart",
+   "target": "cartservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "31078d54da708573"
+}

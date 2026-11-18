@@ -1,0 +1,125 @@
+{
+ "t_det": 128,
+ "ranking": [
+  [
+   "shippingservice",
+   0.4515643625889843
+  ],
+  [
+   "frontend",
+   0.21566187681818
+  ],
+  [
+   "checkoutservice",
+   0.12112877312497086
+  ],
+  [
+   "redis-cart",
+   0.038392276744563046
+  ],
+  [
+   "productcatalogservice",
+   0.03192055481183755
+  ],
+  [
+   "emailservice",
+   0.03145784727378004
+  ],
+  [
+   "currencyservice",
+   0.030954469770667476
+  ],
+  [
+   "paymentservice",
+   0.024769474473487103
+  ],
+  [
+   "cartservice",
+   0.023805873112803612
+  ],
+  [
+   "adservice",
+   0.017608155312872367
+  ],
+  [
+   "recommendationservice",
+   0.012736335967853483
+  ]
+ ],
+ "incident_id": "inc-10052",
+ "t_received": 1794992173.9547808,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0006780409999009862,
+  "gather_context": 0.0029494720001821406,
+  "sanitize": 0.0045792570003868605,
+  "retrieve": 0.0012740600000142877,
+  "diagnose": 0.00013926800011176965,
+  "open_ticket": 0.004980281999905856,
+  "await_approval": 0.0005759820001003391
+ },
+ "burn_rate": 119.02312313866837,
+ "diagnosis": {
+  "root_cause_service": "shippingservice",
+  "fault_type": "crash_loop",
+  "confidence": 0.5,
+  "summary": "Likely crash_loop on shippingservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks shippingservice first"
+   },
+   {
+    "ref": "log:log-00146",
+    "claim": "shippingservice: panic: runtime error: invalid memory address or nil pointer dereference"
+   },
+   {
+    "ref": "log:log-00153",
+    "claim": "shippingservice: fatal error: initialisation failed, exiting"
+   },
+   {
+    "ref": "log:log-00155",
+    "claim": "shippingservice: process exited with code 2 during startup"
+   },
+   {
+    "ref": "rb:rb-crash_loop#symptoms",
+    "claim": "matching runbook: Crash loop (CrashLoopBackOff)"
+   }
+  ],
+  "fix_steps": [
+   "Follow the matching runbook."
+  ],
+  "risk_level": "high",
+  "proposed_actions": [
+   {
+    "kind": "rollback",
+    "target": "shippingservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "6ff7e10c2d354f1d8fe447b2b0a7c1b0",
+  "number": "INC0010053",
+  "urgency": "1",
+  "impact": "1",
+  "affected_cis": 3
+ },
+ "time_to_ticket_s": 0.01405954360961914,
+ "proposed_actions": [
+  {
+   "kind": "rollback",
+   "target": "shippingservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "e619f38afabae610"
+}

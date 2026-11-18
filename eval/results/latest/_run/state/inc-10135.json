@@ -1,0 +1,125 @@
+{
+ "t_det": 141,
+ "ranking": [
+  [
+   "paymentservice",
+   0.42371854229895833
+  ],
+  [
+   "checkoutservice",
+   0.21611646283170943
+  ],
+  [
+   "emailservice",
+   0.05780279758113771
+  ],
+  [
+   "redis-cart",
+   0.053120167323193794
+  ],
+  [
+   "shippingservice",
+   0.048861980720778866
+  ],
+  [
+   "productcatalogservice",
+   0.04750357651793199
+  ],
+  [
+   "currencyservice",
+   0.0366941162493213
+  ],
+  [
+   "cartservice",
+   0.034873225784437946
+  ],
+  [
+   "adservice",
+   0.03374827422544192
+  ],
+  [
+   "recommendationservice",
+   0.029013023358232748
+  ],
+  [
+   "frontend",
+   0.01854783310885603
+  ]
+ ],
+ "incident_id": "inc-10135",
+ "t_received": 1794992175.9506698,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0011628600000221923,
+  "gather_context": 0.0041956060003940365,
+  "sanitize": 0.0024790790002953145,
+  "retrieve": 0.0009474829998907808,
+  "diagnose": 9.506700007477775e-05,
+  "open_ticket": 0.004673220000313449,
+  "await_approval": 0.0011441239998930541
+ },
+ "burn_rate": 9.575104698661042,
+ "diagnosis": {
+  "root_cause_service": "paymentservice",
+  "fault_type": "packet_loss",
+  "confidence": 0.5,
+  "summary": "Likely packet_loss on paymentservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks paymentservice first"
+   },
+   {
+    "ref": "log:log-00127",
+    "claim": "paymentservice: request timeout after 3833ms"
+   },
+   {
+    "ref": "log:log-00129",
+    "claim": "paymentservice: transport is closing; retrying"
+   },
+   {
+    "ref": "log:log-00133",
+    "claim": "paymentservice: transport is closing; retrying"
+   },
+   {
+    "ref": "rb:rb-packet_loss#symptoms",
+    "claim": "matching runbook: Packet loss / connection resets"
+   }
+  ],
+  "fix_steps": [
+   "Follow the matching runbook."
+  ],
+  "risk_level": "medium",
+  "proposed_actions": [
+   {
+    "kind": "rollout_restart",
+    "target": "paymentservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "9e2bfe998c7f4c9181f26db3e66d615c",
+  "number": "INC0010136",
+  "urgency": "2",
+  "impact": "2",
+  "affected_cis": 2
+ },
+ "time_to_ticket_s": 0.01246953010559082,
+ "proposed_actions": [
+  {
+   "kind": "rollout_restart",
+   "target": "paymentservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "80eec32af0ee9b25"
+}

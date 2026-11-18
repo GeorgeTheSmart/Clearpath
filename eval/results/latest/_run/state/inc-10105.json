@@ -1,0 +1,127 @@
+{
+ "t_det": 170,
+ "ranking": [
+  [
+   "frontend",
+   0.2742921993694354
+  ],
+  [
+   "cartservice",
+   0.11160070087627424
+  ],
+  [
+   "currencyservice",
+   0.09323553445397073
+  ],
+  [
+   "productcatalogservice",
+   0.0902867568990067
+  ],
+  [
+   "recommendationservice",
+   0.07952556968776475
+  ],
+  [
+   "shippingservice",
+   0.07613214511635742
+  ],
+  [
+   "paymentservice",
+   0.07133905018567908
+  ],
+  [
+   "redis-cart",
+   0.06835091684514472
+  ],
+  [
+   "adservice",
+   0.05569689872371658
+  ],
+  [
+   "emailservice",
+   0.05237314476823572
+  ],
+  [
+   "checkoutservice",
+   0.027167083074414594
+  ]
+ ],
+ "incident_id": "inc-10105",
+ "t_received": 1794992175.1464226,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0006754490000275837,
+  "gather_context": 0.0029280660000949865,
+  "sanitize": 0.0016741839999667718,
+  "retrieve": 0.001055452999935369,
+  "diagnose": 0.00010989799966409919,
+  "open_ticket": 0.009763130999999703,
+  "await_approval": 0.0010997969998243207
+ },
+ "burn_rate": 20.474454955230698,
+ "diagnosis": {
+  "root_cause_service": "frontend",
+  "fault_type": "cpu_hog",
+  "confidence": 0.5,
+  "summary": "Likely cpu_hog on frontend (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks frontend first"
+   },
+   {
+    "ref": "log:log-00176",
+    "claim": "frontend: event loop blocked for 4154ms"
+   },
+   {
+    "ref": "log:log-00180",
+    "claim": "frontend: request handling slow, worker pool saturated (105 queued)"
+   },
+   {
+    "ref": "log:log-00185",
+    "claim": "frontend: handler exceeded deadline while waiting for worker thread"
+   },
+   {
+    "ref": "rb:rb-cpu_hog#diagnosis",
+    "claim": "matching runbook: CPU saturation / CPU hog"
+   }
+  ],
+  "fix_steps": [
+   "Check for a hot loop or runaway job in recent logs (blocked event loop, worker pool saturated, handler deadline exceeded).",
+   "Mitigate: scale out the deployment (`scale` action) or roll back if a recent release introduced the hot path.",
+   "Follow up: profile (pprof / async-profiler) and set realistic CPU requests/limits."
+  ],
+  "risk_level": "medium",
+  "proposed_actions": [
+   {
+    "kind": "scale",
+    "target": "frontend",
+    "replicas": 3
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "8e6b9001854e440ca822e4c59e2935b9",
+  "number": "INC0010106",
+  "urgency": "1",
+  "impact": "1",
+  "affected_cis": 8
+ },
+ "time_to_ticket_s": 0.01521611213684082,
+ "proposed_actions": [
+  {
+   "kind": "scale",
+   "target": "frontend",
+   "replicas": 3
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "b3bb7fc3fb14684a"
+}

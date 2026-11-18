@@ -1,0 +1,127 @@
+{
+ "t_det": 166,
+ "ranking": [
+  [
+   "productcatalogservice",
+   0.5561945836476733
+  ],
+  [
+   "frontend",
+   0.07682280241602511
+  ],
+  [
+   "checkoutservice",
+   0.07580759083978092
+  ],
+  [
+   "recommendationservice",
+   0.052859892865608875
+  ],
+  [
+   "shippingservice",
+   0.0424993449377141
+  ],
+  [
+   "paymentservice",
+   0.04230825749423746
+  ],
+  [
+   "currencyservice",
+   0.03585828458511945
+  ],
+  [
+   "cartservice",
+   0.030818098589133702
+  ],
+  [
+   "emailservice",
+   0.0299226658136523
+  ],
+  [
+   "redis-cart",
+   0.029325755615060744
+  ],
+  [
+   "adservice",
+   0.027582723195993922
+  ]
+ ],
+ "incident_id": "inc-10072",
+ "t_received": 1794992174.4079897,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0006141900003058254,
+  "gather_context": 0.002571525000348629,
+  "sanitize": 0.004143162999753258,
+  "retrieve": 0.0008425820001320972,
+  "diagnose": 0.00019159100020260666,
+  "open_ticket": 0.004904567999801657,
+  "await_approval": 0.0005281700000523415
+ },
+ "burn_rate": 76.74598252162797,
+ "diagnosis": {
+  "root_cause_service": "productcatalogservice",
+  "fault_type": "bad_deploy",
+  "confidence": 0.5,
+  "summary": "Likely bad_deploy on productcatalogservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks productcatalogservice first"
+   },
+   {
+    "ref": "log:log-00167",
+    "claim": "productcatalogservice: 500 Internal Server Error returned to caller"
+   },
+   {
+    "ref": "log:log-00171",
+    "claim": "productcatalogservice: unhandled exception in handler: KeyError 'REDIS_ADDR'"
+   },
+   {
+    "ref": "log:log-00175",
+    "claim": "productcatalogservice: assertion failed in release v1.2"
+   },
+   {
+    "ref": "rb:rb-bad_deploy#diagnosis",
+    "claim": "matching runbook: Bad deploy (regression in a new release)"
+   }
+  ],
+  "fix_steps": [
+   "Check for new exception types (KeyError, TypeError, assertion failures) after the rollout.",
+   "Mitigate: roll back to the previous revision (`rollback` action).",
+   "Follow up: add a canary stage with automated analysis before full rollout."
+  ],
+  "risk_level": "high",
+  "proposed_actions": [
+   {
+    "kind": "rollback",
+    "target": "productcatalogservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "14dd92f3c2a34ef38bc974ad0a123797",
+  "number": "INC0010073",
+  "urgency": "1",
+  "impact": "1",
+  "affected_cis": 4
+ },
+ "time_to_ticket_s": 0.012696504592895508,
+ "proposed_actions": [
+  {
+   "kind": "rollback",
+   "target": "productcatalogservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "3091435e2e8942c4"
+}

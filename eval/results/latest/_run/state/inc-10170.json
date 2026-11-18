@@ -1,0 +1,125 @@
+{
+ "t_det": 135,
+ "ranking": [
+  [
+   "emailservice",
+   0.5044115238297283
+  ],
+  [
+   "checkoutservice",
+   0.1597932928102921
+  ],
+  [
+   "cartservice",
+   0.050382472970194755
+  ],
+  [
+   "recommendationservice",
+   0.0476051139568314
+  ],
+  [
+   "paymentservice",
+   0.044261174685216675
+  ],
+  [
+   "shippingservice",
+   0.03784870609431083
+  ],
+  [
+   "adservice",
+   0.037795873659677
+  ],
+  [
+   "frontend",
+   0.03196816480916121
+  ],
+  [
+   "currencyservice",
+   0.031222560888604714
+  ],
+  [
+   "productcatalogservice",
+   0.029453511854482306
+  ],
+  [
+   "redis-cart",
+   0.025257604441500874
+  ]
+ ],
+ "incident_id": "inc-10170",
+ "t_received": 1794992176.7261293,
+ "status": "awaiting_approval",
+ "timings": {
+  "ingest": 0.0008375429997613537,
+  "gather_context": 0.0031734970002617047,
+  "sanitize": 0.002069800999834115,
+  "retrieve": 0.0010294059998159355,
+  "diagnose": 9.500599981038249e-05,
+  "open_ticket": 0.004351864000000205,
+  "await_approval": 0.0007321220000449102
+ },
+ "burn_rate": 5.8244384285346396,
+ "diagnosis": {
+  "root_cause_service": "emailservice",
+  "fault_type": "memory_leak",
+  "confidence": 0.5,
+  "summary": "Likely memory_leak on emailservice (deterministic: localizer + runbook retrieval).",
+  "evidence": [
+   {
+    "ref": "loc:1",
+    "claim": "localizer ranks emailservice first"
+   },
+   {
+    "ref": "log:log-00142",
+    "claim": "emailservice: container restarted: OOMKilled (exit code 137)"
+   },
+   {
+    "ref": "log:log-00146",
+    "claim": "emailservice: GC pause 677ms, heap still growing"
+   },
+   {
+    "ref": "log:log-00149",
+    "claim": "emailservice: GC pause 769ms, heap still growing"
+   },
+   {
+    "ref": "rb:rb-memory_leak#symptoms",
+    "claim": "matching runbook: Memory leak leading to OOMKill"
+   }
+  ],
+  "fix_steps": [
+   "Follow the matching runbook."
+  ],
+  "risk_level": "medium",
+  "proposed_actions": [
+   {
+    "kind": "rollout_restart",
+    "target": "emailservice",
+    "replicas": null
+   }
+  ],
+  "degraded": true
+ },
+ "verification": {
+  "total": 5,
+  "unverified": [],
+  "hallucination_rate": 0.0,
+  "unknown_service": false
+ },
+ "ticket": {
+  "sys_id": "c593a6e9760d4bc685f5ced71400c31c",
+  "number": "INC0010171",
+  "urgency": "2",
+  "impact": "3",
+  "affected_cis": 2
+ },
+ "time_to_ticket_s": 0.010795354843139648,
+ "proposed_actions": [
+  {
+   "kind": "rollout_restart",
+   "target": "emailservice",
+   "replicas": null
+  }
+ ],
+ "rejected_actions": [],
+ "action_hash": "d1523e74ad719180"
+}

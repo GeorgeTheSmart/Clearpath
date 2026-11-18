@@ -72,7 +72,8 @@ def fallback(ctx: Context, hits: list[Hit]) -> Diagnosis:
     ev = [Evidence(ref=loc[0].id, claim=f"localizer ranks {root} first")] if loc else []
     ev += [Evidence(ref=it.id, claim=f"{it.service}: {it.text[:120]}") for it in ctx.items if it.kind == "log" and it.service == root][:3]
     if fault_hits:
-        ev.append(Evidence(ref=f"rb:{fault_hits[0].chunk.id}", claim=f"runbook {fault_hits[0].chunk.doc_id} matches"))
+        ch = fault_hits[0].chunk
+        ev.append(Evidence(ref=f"rb:{ch.id}", claim=f"matching runbook: {ch.text.split('.')[0][:100]}"))
     steps = re.findall(r"^\d+\. (.*)$", fault_hits[0].chunk.text, re.M) if fault_hits else []
     risk = "high" if ft in ("crash_loop", "bad_config", "bad_deploy", "dependency_down") else "medium"
     act = {"bad_deploy": "rollback", "bad_config": "rollback", "crash_loop": "rollback", "cpu_hog": "scale"}.get(ft, "rollout_restart")
