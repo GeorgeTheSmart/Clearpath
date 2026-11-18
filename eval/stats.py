@@ -6,11 +6,11 @@ tests/test_stats.py against known values.
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
+from collections.abc import Callable
 from dataclasses import dataclass
 
 import numpy as np
-from numpy.typing import NDArray
+from numpy.typing import ArrayLike, NDArray
 from scipy.stats import binom
 
 B_DEFAULT = 10_000
@@ -40,7 +40,7 @@ def median(a: NDArray[np.float64]) -> float:
 
 
 def bootstrap_ci(
-    x: Sequence[float] | NDArray[np.float64],
+    x: ArrayLike,
     stat: Callable[[NDArray[np.float64]], float] = mean,
     b: int = B_DEFAULT,
     seed: int = 0,
@@ -95,7 +95,7 @@ def mcnemar_exact(b_only: int, a_only: int) -> float:
     return float(min(1.0, 2 * binom.cdf(k, n, 0.5)))
 
 
-def paired_compare(correct_a: Sequence[bool], correct_b: Sequence[bool], b: int = B_DEFAULT, seed: int = 0) -> Paired:
+def paired_compare(correct_a: ArrayLike, correct_b: ArrayLike, b: int = B_DEFAULT, seed: int = 0) -> Paired:
     """Is system B better than A on the *same* incidents?
 
     McNemar uses only discordant pairs, which is the right test for paired

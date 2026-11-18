@@ -93,8 +93,8 @@ def main(out_dir: Path) -> dict[str, Any]:
     grid = []
     for alpha, rho, gamma in itertools.product([0.5, 0.7, 0.85, 0.95], [0.0, 0.1, 0.2, 0.5], [0.0, 0.5, 1.0, 2.0]):
         p = rca.Params(alpha=alpha, rho=rho, gamma=gamma)
-        rk = [rank_of(inc.root, [s for s, _ in rca.rank(A, E, t, p)]) for inc, A, E, t in dev]
-        grid.append(((np.mean(np.array(rk) <= 1), np.mean(np.array(rk) <= 3), -np.mean(rk)), p))
+        dev_ranks = [rank_of(inc.root, [s for s, _ in rca.rank(A, E, t, p)]) for inc, A, E, t in dev]
+        grid.append(((float(np.mean(np.array(dev_ranks) <= 1)), float(np.mean(np.array(dev_ranks) <= 3)), -float(np.mean(dev_ranks))), p))
     grid.sort(key=lambda g: g[0], reverse=True)
     best = grid[0][1]
     print(f"best on DEV: {best} -> top1={grid[0][0][0]:.3f} top3={grid[0][0][1]:.3f}", file=sys.stderr)
@@ -113,7 +113,7 @@ def main(out_dir: Path) -> dict[str, Any]:
     }
     for inc, A, E, t in test:
         cands = {
-            "random": list(rng.permutation(rca.SVCS)),
+            "random": [str(x) for x in rng.permutation(rca.SVCS)],
             "most_alerting": rca.most_alerting(inc.alerts, t),
             "most_anomalous": rca.most_anomalous(A, t),
             "downstream_most_anomalous": rca.downstream_most(A, E, t),
@@ -123,8 +123,8 @@ def main(out_dir: Path) -> dict[str, Any]:
             cands[name] = [s for s, _ in ranked]
             if name == "ppr_full":
                 rankings_out[inc.seed] = {"ranking": ranked, "t_det": t}
-        for name, rk in cands.items():
-            r = rank_of(inc.root, rk)
+        for name, cand in cands.items():
+            r = rank_of(inc.root, cand)
             methods[name].append(r)
             per_fault[name][inc.fault_type].append(r)
 
@@ -155,8 +155,8 @@ def main(out_dir: Path) -> dict[str, Any]:
             key = f"ppr_full_vs_{base}_top{k}"
             comps[key] = c.as_dict()
             pvals[key] = c.p_mcnemar_exact
-    for key, p in stats.holm(pvals).items():
-        comps[key]["p_holm"] = p
+    for key, padj in stats.holm(pvals).items():
+        comps[key]["p_holm"] = padj
     out = {
         "protocol": {"tuned_on": "DEV", "dev_incidents": len(dev), "test_incidents": len(test), "detector_threshold": thr},
         "chosen_params": asdict(best),
