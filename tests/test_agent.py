@@ -1,4 +1,5 @@
 import json
+import urllib.error
 import random
 from pathlib import Path
 
@@ -227,3 +228,24 @@ def test_malicious_llm_output_cannot_act_and_untrusted_text_is_sanitised(tmp_pat
             assert p not in prompt
         if line["injection"]:
             assert line["msg"] not in prompt
+
+
+def test_agent_http_approval_requires_authenticated_user(tmp_path, monkeypatch):
+    import threading
+    import urllib.request
+    from http.server import ThreadingHTTPServer
+
+    from agent import server
+
+    monkeypatch.setattr(server, "VAR", tmp_path)
+    server.Handler.deps = Deps.default(audit=AuditLog(tmp_path / "audit.jsonl"), state_dir=tmp_path / "state")
+    srv = ThreadingHTTPServer(("127.0.0.1", 0), server.Handler)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    base = f"http://127.0.0.1:{srv.server_address[1]}"
+    req = urllib.request.Request(base + "/approve/inc-1", data=b'{"user":"george","approve":true}', method="POST")
+    with pytest.raises(urllib.error.HTTPError) as e:
+        urllib.request.urlopen(req)
+    assert e.value.code == 401
+    req = urllib.request.Request(base + "/incidents", data=b'{"id":"inc-x","services":["frontend"]}', method="POST")
+    assert urllib.request.urlopen(req).status == 202
+    srv.shutdown()

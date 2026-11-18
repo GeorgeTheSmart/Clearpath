@@ -1,0 +1,59 @@
+# Symptom alerts per service. These mirror faults/sim.py STATIC_RULES/COVERAGE
+# so the simulator and the cluster speak the same alert vocabulary; Alertmanager
+# routes all of them to the correlator webhook (observability/alertmanager.yaml).
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: clearpath-symptoms
+  labels: {release: kube-prometheus-stack}
+spec:
+  groups:
+    - name: symptoms
+      rules:
+        - alert: HighLatencyP99
+          expr: histogram_quantile(0.99, sum by (service, le) (rate(http_server_request_duration_seconds_bucket[5m]))) > on(service) group_left() (2 * clearpath_latency_baseline_seconds)
+          for: 1m
+          labels: {severity: warning}
+          annotations:
+            summary: "p99 latency on {{ $labels.service }} is more than 2x its baseline"
+            runbook_url: runbooks/HighLatencyP99.md
+            service: "{{ $labels.service }}"
+        - alert: HighErrorRate
+          expr: sum by (service) (rate(http_server_requests_total{code=~"5.."}[5m])) / sum by (service) (rate(http_server_requests_total[5m])) > 0.05
+          for: 1m
+          labels: {severity: critical}
+          annotations:
+            summary: "{{ $labels.service }} error rate above 5%"
+            runbook_url: runbooks/HighErrorRate.md
+            service: "{{ $labels.service }}"
+        - alert: HighCPU
+          expr: sum by (service) (rate(container_cpu_usage_seconds_total{namespace="boutique"}[5m])) / sum by (service) (kube_pod_container_resource_limits{namespace="boutique",resource="cpu"}) > 0.85
+          for: 1m
+          labels: {severity: warning}
+          annotations:
+            summary: "{{ $labels.service }} using more than 85% of its CPU limit"
+            runbook_url: runbooks/HighCPU.md
+            service: "{{ $labels.service }}"
+        - alert: HighMemory
+          expr: sum by (service) (container_memory_working_set_bytes{namespace="boutique"}) / sum by (service) (kube_pod_container_resource_limits{namespace="boutique",resource="memory"}) > 0.9
+          for: 1m
+          labels: {severity: warning}
+          annotations:
+            summary: "{{ $labels.service }} working set above 90% of its memory limit"
+            runbook_url: runbooks/HighMemory.md
+            service: "{{ $labels.service }}"
+        - alert: PodCrashLooping
+          expr: increase(kube_pod_container_status_restarts_total{namespace="boutique"}[5m]) > 0
+          labels: {severity: warning}
+          annotations:
+            summary: "{{ $labels.service }} container restarted in the last 5 minutes"
+            runbook_url: runbooks/PodCrashLooping.md
+            service: "{{ $labels.service }}"
+        - alert: TargetDown
+          expr: up{namespace="boutique"} == 0
+          for: 1m
+          labels: {severity: critical}
+          annotations:
+            summary: "Prometheus cannot scrape {{ $labels.service }}"
+            runbook_url: runbooks/TargetDown.md
+            service: "{{ $labels.service }}"

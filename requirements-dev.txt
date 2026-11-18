@@ -1,0 +1,8 @@
+-r requirements.txt
+pytest>=8
+hypothesis>=6
+mypy>=1.10
+ruff>=0.5
+pre-commit>=3
+types-PyYAML
+langgraph>=0.2  # optional: agent/langgraph_app.py

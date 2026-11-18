@@ -1,0 +1,14 @@
+# Alertmanager routes every boutique alert to the correlator. Grouping is left
+# to the correlator (topology-aware), so Alertmanager only batches briefly.
+route:
+  receiver: clearpath-correlator
+  group_by: ['alertname', 'service']
+  group_wait: 10s
+  group_interval: 30s
+  repeat_interval: 30s     # re-sends feed the correlator's dedupe counts
+receivers:
+  - name: clearpath-correlator
+    webhook_configs:
+      - url: http://clearpath-correlator.clearpath.svc:8081/api/v1/alerts
+        send_resolved: true
+        max_alerts: 0

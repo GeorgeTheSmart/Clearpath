@@ -1,0 +1,22 @@
+# For each experiment: the alert that must fire, the time bound for recovery,
+# and the maximum error-budget spend allowed (fraction of the 30-day budget).
+kill-cartservice:
+  expect_alert: PodCrashLooping
+  recover_within_s: 90
+  recovered_when: 'min(kube_deployment_status_replicas_available{deployment="cartservice"}) >= 1 and slo:frontend_error_ratio:rate5m < 0.001'
+  max_budget_spend: 0.002
+kill-frontend-half:
+  expect_alert: null          # replicas absorb it: no page expected
+  recover_within_s: 60
+  recovered_when: 'kube_deployment_status_replicas_available{deployment="frontend"} == kube_deployment_spec_replicas{deployment="frontend"}'
+  max_budget_spend: 0.001
+partition-checkout-payment:
+  expect_alert: HighErrorRate
+  recover_within_s: 180       # 120 s partition + 60 s
+  recovered_when: 'slo:frontend_error_ratio:rate5m < 0.001'
+  max_budget_spend: 0.02
+node-drain:
+  expect_alert: null
+  recover_within_s: 240
+  recovered_when: 'sum(kube_deployment_status_replicas_unavailable{namespace="boutique"}) == 0'
+  max_budget_spend: 0.005

@@ -1,0 +1,17 @@
+image:
+  registry: ghcr.io/georgethesmart
+  tag: "0.1.0"           # CI overrides with the signed digest
+targetNamespace: boutique  # where the agent may remediate
+correlator:
+  replicas: 1             # engine state is in-memory; see docs/DESIGN.md#scaling
+  window: 5m
+  crossWindow: 60s
+  lateness: 30s
+agent:
+  replicas: 1
+  llm: none               # anthropic | openai | ollama | none
+  existingSecret: clearpath-secrets   # ANTHROPIC_API_KEY / SN_USER / SN_PASSWORD
+  serviceNowUrl: http://mock-servicenow.clearpath.svc:8090
+resources:
+  correlator: {requests: {cpu: 50m, memory: 64Mi}, limits: {cpu: 500m, memory: 256Mi}}
+  agent: {requests: {cpu: 100m, memory: 256Mi}, limits: {cpu: "1", memory: 1Gi}}

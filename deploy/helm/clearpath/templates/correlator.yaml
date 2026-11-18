@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: clearpath-correlator, labels: {app: clearpath-correlator}}
+spec:
+  replicas: {{ .Values.correlator.replicas }}
+  selector: {matchLabels: {app: clearpath-correlator}}
+  template:
+    metadata: {labels: {app: clearpath-correlator}}
+    spec:
+      automountServiceAccountToken: false
+      securityContext: {runAsNonRoot: true, seccompProfile: {type: RuntimeDefault}}
+      containers:
+        - name: correlator
+          image: "{{ .Values.image.registry }}/clearpath-correlator:{{ .Values.image.tag }}"
+          args: ["-topology", "/topology.json", "-window", "{{ .Values.correlator.window }}", "-lateness", "{{ .Values.correlator.lateness }}",
+                 "-agent", "http://clearpath-agent.{{ .Release.Namespace }}.svc:8000/incidents"]
+          ports: [{containerPort: 8081, name: http}]
+          readinessProbe: {httpGet: {path: /healthz, port: http}, periodSeconds: 5}
+          livenessProbe: {httpGet: {path: /healthz, port: http}, periodSeconds: 10}
+          resources: {{- toYaml .Values.resources.correlator | nindent 12 }}
+          securityContext: {allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, capabilities: {drop: [ALL]}}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: clearpath-correlator, labels: {app: clearpath-correlator}}
+spec:
+  selector: {app: clearpath-correlator}
+  ports: [{port: 8081, targetPort: http, name: http}]

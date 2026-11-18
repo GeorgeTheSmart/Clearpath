@@ -1,0 +1,34 @@
+# Chaos Mesh experiments for the self-healing suite. Each has an expectation in
+# chaos/expectations.yaml that chaos/run_suite.py asserts against Prometheus.
+apiVersion: chaos-mesh.org/v1alpha1
+kind: PodChaos
+metadata: {name: kill-cartservice, namespace: boutique}
+spec:
+  action: pod-kill
+  mode: one
+  selector: {namespaces: [boutique], labelSelectors: {app: cartservice}}
+---
+apiVersion: chaos-mesh.org/v1alpha1
+kind: PodChaos
+metadata: {name: kill-frontend-half, namespace: boutique}
+spec:
+  action: pod-kill
+  mode: fixed-percent
+  value: "50"
+  selector: {namespaces: [boutique], labelSelectors: {app: frontend}}
+---
+apiVersion: chaos-mesh.org/v1alpha1
+kind: NetworkChaos
+metadata: {name: partition-checkout-payment, namespace: boutique}
+spec:
+  action: partition
+  mode: all
+  selector: {namespaces: [boutique], labelSelectors: {app: checkoutservice}}
+  direction: to
+  target:
+    mode: all
+    selector: {namespaces: [boutique], labelSelectors: {app: paymentservice}}
+  duration: "120s"
+---
+# Node drain is not a Chaos Mesh CRD; run_suite.py performs
+# `kubectl drain <node> --ignore-daemonsets --delete-emptydir-data` and uncordons.

@@ -1,0 +1,69 @@
+# SLOs as code for the user-facing edge (frontend), Google SRE workbook ch. 5
+# "multiwindow, multi-burn-rate alerts".
+#   Availability SLO: 99.9% of requests non-5xx over 30 days  -> budget 0.001
+#   Latency SLO:      99% of requests faster than 500 ms over 30 days -> budget 0.01
+# Page when the burn rate is 14.4x over 1h AND 5m (2% of budget in 1 h),
+# or 6x over 6h AND 30m (5% in 6 h). Ticket at 1x over 3d AND 6h.
+# The short window makes the alert reset quickly once the burn stops.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: clearpath-slo
+  labels: {release: kube-prometheus-stack}
+spec:
+  groups:
+    - name: slo:frontend:recording
+      interval: 30s
+      rules:
+        - record: slo:frontend_error_ratio:rate5m
+          expr: sum(rate(http_server_requests_total{service="frontend",code=~"5.."}[5m])) / sum(rate(http_server_requests_total{service="frontend"}[5m]))
+        - record: slo:frontend_error_ratio:rate30m
+          expr: sum(rate(http_server_requests_total{service="frontend",code=~"5.."}[30m])) / sum(rate(http_server_requests_total{service="frontend"}[30m]))
+        - record: slo:frontend_error_ratio:rate1h
+          expr: sum(rate(http_server_requests_total{service="frontend",code=~"5.."}[1h])) / sum(rate(http_server_requests_total{service="frontend"}[1h]))
+        - record: slo:frontend_error_ratio:rate6h
+          expr: sum(rate(http_server_requests_total{service="frontend",code=~"5.."}[6h])) / sum(rate(http_server_requests_total{service="frontend"}[6h]))
+        - record: slo:frontend_error_ratio:rate3d
+          expr: sum(rate(http_server_requests_total{service="frontend",code=~"5.."}[3d])) / sum(rate(http_server_requests_total{service="frontend"}[3d]))
+        - record: slo:frontend_slow_ratio:rate5m
+          expr: 1 - (sum(rate(http_server_request_duration_seconds_bucket{service="frontend",le="0.5"}[5m])) / sum(rate(http_server_request_duration_seconds_count{service="frontend"}[5m])))
+        - record: slo:frontend_slow_ratio:rate1h
+          expr: 1 - (sum(rate(http_server_request_duration_seconds_bucket{service="frontend",le="0.5"}[1h])) / sum(rate(http_server_request_duration_seconds_count{service="frontend"}[1h])))
+        - record: slo:frontend_slow_ratio:rate30m
+          expr: 1 - (sum(rate(http_server_request_duration_seconds_bucket{service="frontend",le="0.5"}[30m])) / sum(rate(http_server_request_duration_seconds_count{service="frontend"}[30m])))
+        - record: slo:frontend_slow_ratio:rate6h
+          expr: 1 - (sum(rate(http_server_request_duration_seconds_bucket{service="frontend",le="0.5"}[6h])) / sum(rate(http_server_request_duration_seconds_count{service="frontend"}[6h])))
+        - record: slo:frontend_availability:budget_remaining_30d
+          expr: 1 - (sum(increase(http_server_requests_total{service="frontend",code=~"5.."}[30d])) / sum(increase(http_server_requests_total{service="frontend"}[30d]))) / 0.001
+    - name: slo:frontend:alerts
+      rules:
+        - alert: FrontendAvailabilityBudgetBurnFast
+          expr: slo:frontend_error_ratio:rate1h > (14.4 * 0.001) and slo:frontend_error_ratio:rate5m > (14.4 * 0.001)
+          labels: {severity: page, service: frontend, slo: availability}
+          annotations:
+            summary: "frontend is burning its 99.9% availability budget at >14.4x (2% of 30d budget per hour)"
+            runbook_url: runbooks/alert-SLOBurn.md
+        - alert: FrontendAvailabilityBudgetBurnSlow
+          expr: slo:frontend_error_ratio:rate6h > (6 * 0.001) and slo:frontend_error_ratio:rate30m > (6 * 0.001)
+          labels: {severity: page, service: frontend, slo: availability}
+          annotations:
+            summary: "frontend availability budget burn >6x over 6h (5% of budget in 6h)"
+            runbook_url: runbooks/alert-SLOBurn.md
+        - alert: FrontendAvailabilityBudgetBurnTicket
+          expr: slo:frontend_error_ratio:rate3d > (1 * 0.001) and slo:frontend_error_ratio:rate6h > (1 * 0.001)
+          labels: {severity: ticket, service: frontend, slo: availability}
+          annotations:
+            summary: "frontend availability budget burning faster than it accrues over 3 days"
+            runbook_url: runbooks/alert-SLOBurn.md
+        - alert: FrontendLatencyBudgetBurnFast
+          expr: slo:frontend_slow_ratio:rate1h > (14.4 * 0.01) and slo:frontend_slow_ratio:rate5m > (14.4 * 0.01)
+          labels: {severity: page, service: frontend, slo: latency}
+          annotations:
+            summary: "frontend >500ms requests are burning the 99% latency budget at >14.4x"
+            runbook_url: runbooks/alert-SLOBurn.md
+        - alert: FrontendLatencyBudgetBurnSlow
+          expr: slo:frontend_slow_ratio:rate6h > (6 * 0.01) and slo:frontend_slow_ratio:rate30m > (6 * 0.01)
+          labels: {severity: page, service: frontend, slo: latency}
+          annotations:
+            summary: "frontend latency budget burn >6x over 6h"
+            runbook_url: runbooks/alert-SLOBurn.md

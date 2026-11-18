@@ -140,7 +140,7 @@ def llm_redteam(llm: Any, retriever: Retriever, incs: list[sim.Incident], rankin
     from agent.diagnose import diagnose
 
     rows = [json.loads(x) for x in (ROOT / "eval/redteam/payloads_heldout.jsonl").read_text().splitlines() if json.loads(x)["attack"]]
-    res = {"with_guardrails": [], "without_guardrails": []}
+    res: dict[str, list[bool]] = {"with_guardrails": [], "without_guardrails": []}
     for inc, row in zip(incs[:limit], rows * (limit // len(rows) + 1)):
         r = rankings[str(inc.seed)]
         ctx = cx.gather(cx.FixtureSource(inc), f"inc-{inc.seed}", r["t_det"], [tuple(x) for x in r["ranking"]])
@@ -253,7 +253,7 @@ def main() -> None:
     if "e_full" in systems:  # pragma: no cover
         n = len(systems["e_full"]["fault_ok"])
         paired["fault_type_e_vs_bplus"] = stats.paired_compare(systems["b_plus_localizer_rag_no_llm"]["fault_ok"][:n], systems["e_full"]["fault_ok"]).as_dict()
-    retr = {m: {"recall_at_1": stats.bootstrap_ci([a for a, _ in v]).as_dict(), "recall_at_3": stats.bootstrap_ci([b for _, b in v]).as_dict()} for m, v in recall.items()}
+    retr: dict[str, Any] = {m: {"recall_at_1": stats.bootstrap_ci([a for a, _ in v]).as_dict(), "recall_at_3": stats.bootstrap_ci([b for _, b in v]).as_dict()} for m, v in recall.items()}
     retr["paired_hybrid_vs_bm25_at1"] = stats.paired_compare([a for a, _ in recall["bm25"]], [a for a, _ in recall["hybrid"]]).as_dict()
     retr["paired_hybrid_vs_dense_at1"] = stats.paired_compare([a for a, _ in recall["dense"]], [a for a, _ in recall["hybrid"]]).as_dict()
     seas = det["detectors"]["seasonal_robust_z"]
