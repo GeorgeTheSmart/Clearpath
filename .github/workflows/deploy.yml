@@ -1,0 +1,45 @@
+name: deploy
+on:
+  workflow_run:
+    workflows: [pr]
+    types: [completed]
+    branches: [main]
+permissions:
+  contents: read
+  id-token: write    # AWS via OIDC: no long-lived keys anywhere
+concurrency: {group: deploy, cancel-in-progress: false}
+jobs:
+  staging:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with: {role-to-assume: "${{ vars.AWS_GHA_ROLE_ARN }}", aws-region: ap-south-1}
+      - run: aws eks update-kubeconfig --name clearpath-dev
+      - name: Verify signature before deploy
+        run: |
+          curl -sSfL https://github.com/sigstore/cosign/releases/download/v2.4.1/cosign-linux-amd64 -o cosign && chmod +x cosign
+          for img in clearpath-correlator clearpath-agent; do
+            ./cosign verify ghcr.io/georgethesmart/$img:${{ github.event.workflow_run.head_sha }} \
+              --certificate-identity-regexp 'https://github.com/GeorgeTheSmart/clearpath/.*' \
+              --certificate-oidc-issuer https://token.actions.githubusercontent.com
+          done
+      - run: helm upgrade --install clearpath deploy/helm/clearpath -n clearpath-staging --create-namespace --set image.tag=${{ github.event.workflow_run.head_sha }} --wait --timeout 5m
+      - name: Smoke test
+        run: |
+          kubectl -n clearpath-staging port-forward svc/clearpath-correlator 8081:8081 & sleep 5
+          curl -sf localhost:8081/healthz
+          curl -sf -XPOST localhost:8081/api/v1/alerts -d '{"version":"4","alerts":[{"status":"firing","fingerprint":"smoke","labels":{"alertname":"Smoke","service":"frontend"}}]}'
+          curl -sf localhost:8081/metrics | grep -q 'correlator_alerts_ingested_total [1-9]'
+  production:
+    needs: staging
+    runs-on: ubuntu-latest
+    environment: production   # GitHub Environment with required reviewers = manual approval gate
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with: {role-to-assume: "${{ vars.AWS_GHA_ROLE_ARN }}", aws-region: ap-south-1}
+      - run: aws eks update-kubeconfig --name clearpath-dev
+      - run: helm upgrade --install clearpath deploy/helm/clearpath -n clearpath --create-namespace --set image.tag=${{ github.event.workflow_run.head_sha }} --wait --atomic --timeout 5m

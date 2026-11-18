@@ -1,0 +1,88 @@
+name: pr
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12", cache: pip}
+      - run: pip install -r requirements-dev.txt
+      - run: ruff check . && ruff format --check .
+      - run: mypy
+      - run: pytest -q
+  go:
+    runs-on: ubuntu-latest
+    defaults: {run: {working-directory: correlator}}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: {go-version: "1.24"}
+      - run: test -z "$(gofmt -l .)"
+      - run: go vet ./...
+      - run: go test -race -count=1 ./...        # includes testing/quick property tests
+      - run: go test -run=^$ -bench=. ./... || true
+  terraform:
+    runs-on: ubuntu-latest
+    defaults: {run: {working-directory: infra/terraform}}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with: {terraform_version: "1.9.8"}
+      - run: terraform fmt -check -recursive
+      - run: terraform -chdir=envs/dev init -backend=false && terraform -chdir=envs/dev validate
+      - uses: terraform-linters/setup-tflint@v4
+      - run: tflint --init && tflint --recursive
+      - uses: bridgecrewio/checkov-action@v12
+        with: {directory: infra/terraform, framework: terraform, soft_fail: false}
+  images:
+    needs: [python, go]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write          # keyless cosign signing via GitHub OIDC
+    strategy:
+      matrix:
+        include:
+          - {name: clearpath-correlator, context: correlator, file: correlator/Dockerfile}
+          - {name: clearpath-agent, context: ., file: Dockerfile.agent}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.file }}
+          load: true
+          tags: ghcr.io/georgethesmart/${{ matrix.name }}:${{ github.sha }}
+      - name: Trivy (fail on HIGH/CRITICAL)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ghcr.io/georgethesmart/${{ matrix.name }}:${{ github.sha }}
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+      - name: SBOM (Syft, SPDX)
+        uses: anchore/sbom-action@v0
+        with:
+          image: ghcr.io/georgethesmart/${{ matrix.name }}:${{ github.sha }}
+          format: spdx-json
+          output-file: sbom-${{ matrix.name }}.spdx.json
+      - if: github.ref == 'refs/heads/main'
+        name: Push and sign (cosign keyless)
+        env: {IMAGE: "ghcr.io/georgethesmart/${{ matrix.name }}:${{ github.sha }}"}
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          docker push "$IMAGE"
+          DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' "$IMAGE")
+          curl -sSfL https://github.com/sigstore/cosign/releases/download/v2.4.1/cosign-linux-amd64 -o cosign && chmod +x cosign
+          ./cosign sign --yes "$DIGEST"
+          ./cosign attest --yes --predicate sbom-${{ matrix.name }}.spdx.json --type spdxjson "$DIGEST"
+      - uses: actions/upload-artifact@v4
+        with: {name: "sbom-${{ matrix.name }}", path: "sbom-${{ matrix.name }}.spdx.json"}
