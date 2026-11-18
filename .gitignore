@@ -5,3 +5,6 @@ __pycache__/
 correlator/bin/
 eval/results/*/fixtures_cache/
 *.prof
+var/
+.cache/
+eval/results/*/_run/

@@ -1,0 +1,365 @@
+{
+ "generated_at": "2026-11-18T09:09:35Z",
+ "dataset": {
+  "test_incidents": 300,
+  "dev_incidents": 200,
+  "generator_version": "1",
+  "source": "seeded simulator (faults/sim.py), not a live cluster"
+ },
+ "systems": {
+  "a_static_most_alerting": {
+   "n": 300,
+   "root_top1": {
+    "estimate": 0.55,
+    "ci95_lo": 0.49333333333333335,
+    "ci95_hi": 0.6066666666666667
+   },
+   "fault_type_acc": {
+    "estimate": 0.27666666666666667,
+    "ci95_lo": 0.22666666666666666,
+    "ci95_hi": 0.32666666666666666
+   },
+   "root_top3": {
+    "estimate": 0.74,
+    "ci95_lo": 0.69,
+    "ci95_hi": 0.79
+   }
+  },
+  "b_localizer": {
+   "n": 300,
+   "root_top1": {
+    "estimate": 0.9933333333333333,
+    "ci95_lo": 0.9833333333333333,
+    "ci95_hi": 1.0
+   },
+   "fault_type_acc": {
+    "estimate": 0.24333333333333335,
+    "ci95_lo": 0.19666666666666666,
+    "ci95_hi": 0.2900833333333321
+   },
+   "root_top3": {
+    "estimate": 1.0,
+    "ci95_lo": 1.0,
+    "ci95_hi": 1.0
+   }
+  },
+  "b_plus_localizer_rag_no_llm": {
+   "n": 300,
+   "root_top1": {
+    "estimate": 0.9933333333333333,
+    "ci95_lo": 0.9833333333333333,
+    "ci95_hi": 1.0
+   },
+   "fault_type_acc": {
+    "estimate": 0.9233333333333333,
+    "ci95_lo": 0.8933333333333333,
+    "ci95_hi": 0.95
+   },
+   "root_top3": {
+    "estimate": 1.0,
+    "ci95_lo": 1.0,
+    "ci95_hi": 1.0
+   },
+   "hallucination_rate": {
+    "estimate": 0.0,
+    "ci95_lo": 0.0,
+    "ci95_hi": 0.0
+   }
+  },
+  "c_llm_no_rag": {
+   "status": "not run: no LLM configured in this environment (set CLEARPATH_LLM)"
+  },
+  "d_llm_rag": {
+   "status": "not run: no LLM configured in this environment (set CLEARPATH_LLM)"
+  },
+  "e_full": {
+   "status": "not run: no LLM configured in this environment (set CLEARPATH_LLM)"
+  }
+ },
+ "paired": {
+  "fault_type_bplus_vs_a": {
+   "acc_a": 0.27666666666666667,
+   "acc_b": 0.9233333333333333,
+   "diff": 0.6466666666666666,
+   "diff_ci95_lo": 0.59,
+   "diff_ci95_hi": 0.7033333333333334,
+   "b_only": 197,
+   "a_only": 3,
+   "p_mcnemar_exact": 1.659679419208622e-54,
+   "discordant_odds_ratio": 56.42857142857143
+  },
+  "fault_type_bplus_vs_b": {
+   "acc_a": 0.24333333333333335,
+   "acc_b": 0.9233333333333333,
+   "diff": 0.68,
+   "diff_ci95_lo": 0.6266666666666667,
+   "diff_ci95_hi": 0.7333333333333333,
+   "b_only": 205,
+   "a_only": 1,
+   "p_mcnemar_exact": 4.025513007866426e-60,
+   "discordant_odds_ratio": 137.0
+  },
+  "root_top1_b_vs_a": {
+   "acc_a": 0.55,
+   "acc_b": 0.9933333333333333,
+   "diff": 0.44333333333333336,
+   "diff_ci95_lo": 0.38666666666666666,
+   "diff_ci95_hi": 0.5,
+   "b_only": 134,
+   "a_only": 1,
+   "p_mcnemar_exact": 6.244813738743402e-39,
+   "discordant_odds_ratio": 89.66666666666667
+  }
+ },
+ "retrieval": {
+  "bm25": {
+   "recall_at_1": {
+    "estimate": 0.9166666666666666,
+    "ci95_lo": 0.8833333333333333,
+    "ci95_hi": 0.9466666666666667
+   },
+   "recall_at_3": {
+    "estimate": 0.99,
+    "ci95_lo": 0.9766666666666667,
+    "ci95_hi": 1.0
+   }
+  },
+  "dense": {
+   "recall_at_1": {
+    "estimate": 0.9366666666666666,
+    "ci95_lo": 0.91,
+    "ci95_hi": 0.9633333333333334
+   },
+   "recall_at_3": {
+    "estimate": 0.9933333333333333,
+    "ci95_lo": 0.9833333333333333,
+    "ci95_hi": 1.0
+   }
+  },
+  "hybrid": {
+   "recall_at_1": {
+    "estimate": 0.9233333333333333,
+    "ci95_lo": 0.8933333333333333,
+    "ci95_hi": 0.95
+   },
+   "recall_at_3": {
+    "estimate": 0.9933333333333333,
+    "ci95_lo": 0.9833333333333333,
+    "ci95_hi": 1.0
+   }
+  },
+  "paired_hybrid_vs_bm25_at1": {
+   "acc_a": 0.9166666666666666,
+   "acc_b": 0.9233333333333333,
+   "diff": 0.006666666666666667,
+   "diff_ci95_lo": 0.0,
+   "diff_ci95_hi": 0.016666666666666666,
+   "b_only": 2,
+   "a_only": 0,
+   "p_mcnemar_exact": 0.5,
+   "discordant_odds_ratio": 5.0
+  },
+  "paired_hybrid_vs_dense_at1": {
+   "acc_a": 0.9366666666666666,
+   "acc_b": 0.9233333333333333,
+   "diff": -0.013333333333333334,
+   "diff_ci95_lo": -0.02666666666666667,
+   "diff_ci95_hi": -0.0033333333333333335,
+   "b_only": 0,
+   "a_only": 4,
+   "p_mcnemar_exact": 0.125,
+   "discordant_odds_ratio": 0.1111111111111111
+  }
+ },
+ "guardrails": {
+  "pii_planted": 6580,
+  "pii_leak_rate": 0.0,
+  "pii_leak_by_kind": {
+   "card": 0.0,
+   "phone": 0.0,
+   "email": 0.0
+  },
+  "pii_over_redaction_rate": 0.0005382602926633871,
+  "sim_injection_lines": 165,
+  "sim_injection_quarantine_rate": 1.0,
+  "benign_log_lines": 86302,
+  "benign_false_quarantine_rate": 1.158721698222521e-05
+ },
+ "redteam": {
+  "payloads": {
+   "attacks": 40,
+   "filter_block_rate": {
+    "estimate": 0.975,
+    "ci95_lo": 0.925,
+    "ci95_hi": 1.0
+   },
+   "hard_negatives": 25,
+   "hard_negative_false_block_rate": 0.0,
+   "missed": [
+    "rt-035"
+   ],
+   "by_category": {
+    "command": 1.0,
+    "delimiter": 1.0,
+    "exfil": 1.0,
+    "json": 1.0,
+    "misattr": 1.0,
+    "multilingual": 1.0,
+    "obfusc": 1.0,
+    "override": 1.0,
+    "paraphrase": 1.0,
+    "role": 1.0,
+    "split": 0.5,
+    "ticket": 1.0,
+    "tool": 1.0
+   }
+  },
+  "payloads_heldout": {
+   "attacks": 30,
+   "filter_block_rate": {
+    "estimate": 1.0,
+    "ci95_lo": 1.0,
+    "ci95_hi": 1.0
+   },
+   "hard_negatives": 20,
+   "hard_negative_false_block_rate": 0.0,
+   "missed": [],
+   "by_category": {
+    "command": 1.0,
+    "delimiter": 1.0,
+    "exfil": 1.0,
+    "json": 1.0,
+    "misattr": 1.0,
+    "multilingual": 1.0,
+    "obfusc": 1.0,
+    "override": 1.0,
+    "paraphrase": 1.0,
+    "role": 1.0,
+    "social": 1.0,
+    "split": 1.0,
+    "ticket": 1.0,
+    "tool": 1.0
+   }
+  },
+  "action_policy_fuzz": {
+   "cases": 20000,
+   "out_of_policy_accepted": 0
+  }
+ },
+ "time_to_ticket": {
+  "scope": "pipeline only: incident received -> ServiceNow incident created on the local mock over HTTP; no LLM; excludes detection delay and correlator window",
+  "median_ms": {
+   "estimate": 12.305021286010742,
+   "ci95_lo": 11.98434829711914,
+   "ci95_hi": 12.729048728942871
+  },
+  "p95_ms": 17.74905920028687,
+  "per_node_median_ms": {
+   "ingest": 0.3594795000481099,
+   "gather_context": 2.9349444998842955,
+   "sanitize": 2.1806094998737535,
+   "retrieve": 1.0634670002218627,
+   "diagnose": 0.11899349988198082,
+   "open_ticket": 5.201593499805313,
+   "await_approval": 0.35498850002113613
+  }
+ },
+ "detection_delay_median_min": {
+  "estimate": 0.5,
+  "ci95_lo": 0.5,
+  "ci95_hi": 0.5
+ },
+ "cost_per_incident": {
+  "no_llm_path": "0 tokens",
+  "llm": "not run"
+ },
+ "localization_summary": {
+  "random": {
+   "top1": {
+    "estimate": 0.06,
+    "ci95_lo": 0.03333333333333333,
+    "ci95_hi": 0.08666666666666667
+   },
+   "top3": {
+    "estimate": 0.2633333333333333,
+    "ci95_lo": 0.21333333333333335,
+    "ci95_hi": 0.31333333333333335
+   },
+   "mean_rank": {
+    "estimate": 6.256666666666667,
+    "ci95_lo": 5.8966666666666665,
+    "ci95_hi": 6.613333333333333
+   },
+   "expected_top1": 0.09090909090909091,
+   "expected_top3": 0.2727272727272727
+  },
+  "most_alerting": {
+   "top1": {
+    "estimate": 0.55,
+    "ci95_lo": 0.49333333333333335,
+    "ci95_hi": 0.6066666666666667
+   },
+   "top3": {
+    "estimate": 0.74,
+    "ci95_lo": 0.69,
+    "ci95_hi": 0.79
+   },
+   "mean_rank": {
+    "estimate": 3.0366666666666666,
+    "ci95_lo": 2.6966666666666668,
+    "ci95_hi": 3.406749999999999
+   }
+  },
+  "most_anomalous": {
+   "top1": {
+    "estimate": 0.7133333333333334,
+    "ci95_lo": 0.66,
+    "ci95_hi": 0.7633333333333333
+   },
+   "top3": {
+    "estimate": 0.9833333333333333,
+    "ci95_lo": 0.9666666666666667,
+    "ci95_hi": 0.9966666666666667
+   },
+   "mean_rank": {
+    "estimate": 1.38,
+    "ci95_lo": 1.3066666666666666,
+    "ci95_hi": 1.4566666666666668
+   }
+  },
+  "downstream_most_anomalous": {
+   "top1": {
+    "estimate": 0.9833333333333333,
+    "ci95_lo": 0.9666666666666667,
+    "ci95_hi": 0.9966666666666667
+   },
+   "top3": {
+    "estimate": 1.0,
+    "ci95_lo": 1.0,
+    "ci95_hi": 1.0
+   },
+   "mean_rank": {
+    "estimate": 1.0166666666666666,
+    "ci95_lo": 1.0033333333333334,
+    "ci95_hi": 1.0333333333333334
+   }
+  },
+  "ppr_full": {
+   "top1": {
+    "estimate": 0.9933333333333333,
+    "ci95_lo": 0.9833333333333333,
+    "ci95_hi": 1.0
+   },
+   "top3": {
+    "estimate": 1.0,
+    "ci95_lo": 1.0,
+    "ci95_hi": 1.0
+   },
+   "mean_rank": {
+    "estimate": 1.0066666666666666,
+    "ci95_lo": 1.0,
+    "ci95_hi": 1.0166666666666666
+   }
+  }
+ }
+}
