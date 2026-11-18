@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.mypy_cache/
+.pytest_cache/
+correlator/bin/
+eval/results/*/fixtures_cache/
+*.prof
