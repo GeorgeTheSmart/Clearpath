@@ -78,7 +78,16 @@ Verified on the live cluster (2026-11-19):
 * **Sustained alerts held incidents open** until they stopped firing (Alertmanager re-sends them), so the correlator now announces an incident while it is still open (DESIGN.md, correlator).
 * **Local LLM smoke test.** Qwen2.5-7B-Instruct diagnosed 3 of 3 held-out incidents correctly (memory leak, bad deploy, packet loss) with 0 unverified evidence references, at about 8.5 s per diagnosis on one laptop GPU.
 
-**Not yet run to completion:** the full chaos suite with the corrected expectations (earlier runs exposed and fixed the harness bugs above, but the host machine powered off repeatedly under sustained load before a complete run), and the 100-incident LLM evaluation. Their rows stay "not run" in the results until they finish; nothing is estimated.
+**LLM evaluation (2026-11-19, `eval/results/2026-11-19`).** Qwen2.5-7B-Instruct on the first 100 TEST incidents, about 10 s per call on one RTX 4070 Laptop GPU:
+
+| System | Root top-1 | Fault type | Unverified evidence |
+|---|---|---|---|
+| (c) LLM, no RAG | 79% | 50% | 2.8% |
+| (d) LLM + RAG | 80% | 81% | 2.9% |
+| (e) full (localizer + RAG + guardrails + LLM) | 87% | 87% | 1.7% |
+| b+ (no LLM) on the same 100 | 99% | 94% | 0% |
+
+The honest reading: runbook retrieval is what makes the LLM useful (+31 pp fault type from (c) to (d)), and localizer context adds more. But the deterministic b+ path is still more accurate, significantly so on root cause (−12 pp, p=0.002). The LLM sometimes overrides a correct localizer ranking. The design therefore treats the LLM as the explainer, not the decision maker. Constraining the LLM to the localizer's top-k suspects is the obvious next step, and it should be tuned on DEV, not on these numbers.
 
 ## Negative and null results (kept on purpose)
 

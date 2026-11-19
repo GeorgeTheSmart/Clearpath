@@ -9,7 +9,7 @@ Numbers refer to `eval/results/latest/report.md` and `eval/results/bench_correla
 2. **Why not just send all alerts to an LLM?**
    Cost, latency and correctness. The topology reasoning is done better and deterministically by the localizer (99% top-1 vs 55% for most-alerting); the LLM only explains and drafts. When the LLM is down, the system still files a ticket (`diagnose.fallback`).
 3. **What is the critical path for time-to-ticket?**
-   Detection delay (median 0.5 min, p90 2.5 min for the seasonal detector) + correlator window + pipeline (median about 12 ms without an LLM, mostly the ServiceNow HTTP calls). With an LLM, add one call of a few seconds.
+   Detection delay (median 0.5 min, p90 2.5 min for the seasonal detector) + correlator window + pipeline (median 12–63 ms without an LLM depending on machine load, mostly the ServiceNow HTTP calls). With the local 7B LLM, add one call of about 10 s.
 4. **How does it scale to 10k services?**
    Correlator: shard by connected component of the service graph, since links never cross components (DESIGN §scaling). Localizer: work on the anomalous subgraph only. Retrieval: an ANN index once the corpus is more than about 10⁴ chunks.
 5. **What happens if the correlator restarts?**

@@ -43,7 +43,7 @@ LOKI_CHART ?= 7.6.0
 TEMPO_CHART ?= 1.24.4
 CHAOS_MESH_CHART ?= 2.8.8
 
-.PHONY: help test rules-test llm-up eval-llm deploy-clearpath lint typecheck bench eval demo images up-local down chaos aws-up aws-down
+.PHONY: help test rules-test llm-up eval-llm deploy-clearpath e2e-live lint typecheck bench eval demo images up-local down chaos aws-up aws-down
 
 help:
 	@grep -E '^[a-z-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  %-12s %s\n", $$1, $$2}'
@@ -142,6 +142,9 @@ deploy-clearpath: ## build the images, load them into kind and (re)deploy only t
 images: ## build the correlator and agent images locally (what up-local loads into kind)
 	docker build -t $(IMAGE_REGISTRY)/clearpath-correlator:$(IMAGE_TAG) correlator
 	docker build -t $(IMAGE_REGISTRY)/clearpath-agent:$(IMAGE_TAG) -f Dockerfile.agent .
+
+e2e-live: ## live end-to-end: take paymentservice down, diagnose, approve, execute, verify recovery (~10 min)
+	bash scripts/e2e-live.sh paymentservice
 
 chaos: ## chaos suite with recovery/alert/budget assertions against the up-local cluster
 	kubectl -n monitoring port-forward svc/kps-kube-prometheus-stack-prometheus 9090:9090 >/dev/null 2>&1 & pf=$$!; \

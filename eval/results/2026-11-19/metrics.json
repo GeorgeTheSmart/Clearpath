@@ -1,0 +1,534 @@
+{
+ "generated_at": "2026-11-19T08:23:50Z",
+ "dataset": {
+  "test_incidents": 300,
+  "dev_incidents": 200,
+  "generator_version": "1",
+  "source": "seeded simulator (faults/sim.py), not a live cluster"
+ },
+ "systems": {
+  "a_static_most_alerting": {
+   "n": 300,
+   "root_top1": {
+    "estimate": 0.55,
+    "ci95_lo": 0.49333333333333335,
+    "ci95_hi": 0.6066666666666667
+   },
+   "fault_type_acc": {
+    "estimate": 0.27666666666666667,
+    "ci95_lo": 0.22666666666666666,
+    "ci95_hi": 0.32666666666666666
+   },
+   "root_top3": {
+    "estimate": 0.74,
+    "ci95_lo": 0.69,
+    "ci95_hi": 0.79
+   }
+  },
+  "b_localizer": {
+   "n": 300,
+   "root_top1": {
+    "estimate": 0.9933333333333333,
+    "ci95_lo": 0.9833333333333333,
+    "ci95_hi": 1.0
+   },
+   "fault_type_acc": {
+    "estimate": 0.24333333333333335,
+    "ci95_lo": 0.19666666666666666,
+    "ci95_hi": 0.2900833333333321
+   },
+   "root_top3": {
+    "estimate": 1.0,
+    "ci95_lo": 1.0,
+    "ci95_hi": 1.0
+   }
+  },
+  "b_plus_localizer_rag_no_llm": {
+   "n": 300,
+   "root_top1": {
+    "estimate": 0.9933333333333333,
+    "ci95_lo": 0.9833333333333333,
+    "ci95_hi": 1.0
+   },
+   "fault_type_acc": {
+    "estimate": 0.9233333333333333,
+    "ci95_lo": 0.8933333333333333,
+    "ci95_hi": 0.95
+   },
+   "root_top3": {
+    "estimate": 1.0,
+    "ci95_lo": 1.0,
+    "ci95_hi": 1.0
+   },
+   "hallucination_rate": {
+    "estimate": 0.0,
+    "ci95_lo": 0.0,
+    "ci95_hi": 0.0
+   }
+  },
+  "c_llm_no_rag": {
+   "n": 100,
+   "root_top1": {
+    "estimate": 0.79,
+    "ci95_lo": 0.71,
+    "ci95_hi": 0.87
+   },
+   "fault_type_acc": {
+    "estimate": 0.5,
+    "ci95_lo": 0.4,
+    "ci95_hi": 0.6
+   },
+   "hallucination_rate": {
+    "estimate": 0.02841280941280941,
+    "ci95_lo": 0.015755194805194803,
+    "ci95_hi": 0.04251538877788878
+   },
+   "fallback_rate": 0.0,
+   "provider": "ollama",
+   "model": "qwen2.5:7b-instruct",
+   "incidents": 100,
+   "input_tokens_per_incident": 1323.41,
+   "output_tokens_per_incident": 423.69,
+   "llm_wall_s_per_incident": 9.895635364055634
+  },
+  "d_llm_rag": {
+   "n": 100,
+   "root_top1": {
+    "estimate": 0.8,
+    "ci95_lo": 0.72,
+    "ci95_hi": 0.8702499999999963
+   },
+   "fault_type_acc": {
+    "estimate": 0.81,
+    "ci95_lo": 0.73,
+    "ci95_hi": 0.88
+   },
+   "hallucination_rate": {
+    "estimate": 0.029261904761904763,
+    "ci95_lo": 0.014190476190476189,
+    "ci95_hi": 0.0466672619047619
+   },
+   "fallback_rate": 0.0,
+   "provider": "ollama",
+   "model": "qwen2.5:7b-instruct",
+   "incidents": 100,
+   "input_tokens_per_incident": 1752.15,
+   "output_tokens_per_incident": 424.83,
+   "llm_wall_s_per_incident": 9.932569119930267
+  },
+  "e_full": {
+   "n": 100,
+   "root_top1": {
+    "estimate": 0.87,
+    "ci95_lo": 0.8,
+    "ci95_hi": 0.93
+   },
+   "fault_type_acc": {
+    "estimate": 0.87,
+    "ci95_lo": 0.8,
+    "ci95_hi": 0.93
+   },
+   "hallucination_rate": {
+    "estimate": 0.0169,
+    "ci95_lo": 0.006566666666666666,
+    "ci95_hi": 0.02876749999999999
+   },
+   "fallback_rate": 0.0,
+   "provider": "ollama",
+   "model": "qwen2.5:7b-instruct",
+   "incidents": 100,
+   "input_tokens_per_incident": 1829.73,
+   "output_tokens_per_incident": 422.89,
+   "llm_wall_s_per_incident": 10.008936007022857
+  }
+ },
+ "paired": {
+  "fault_type_bplus_vs_a": {
+   "acc_a": 0.27666666666666667,
+   "acc_b": 0.9233333333333333,
+   "diff": 0.6466666666666666,
+   "diff_ci95_lo": 0.59,
+   "diff_ci95_hi": 0.7033333333333334,
+   "b_only": 197,
+   "a_only": 3,
+   "p_mcnemar_exact": 1.659679419208622e-54,
+   "discordant_odds_ratio": 56.42857142857143
+  },
+  "fault_type_bplus_vs_b": {
+   "acc_a": 0.24333333333333335,
+   "acc_b": 0.9233333333333333,
+   "diff": 0.68,
+   "diff_ci95_lo": 0.6266666666666667,
+   "diff_ci95_hi": 0.7333333333333333,
+   "b_only": 205,
+   "a_only": 1,
+   "p_mcnemar_exact": 4.025513007866426e-60,
+   "discordant_odds_ratio": 137.0
+  },
+  "root_top1_b_vs_a": {
+   "acc_a": 0.55,
+   "acc_b": 0.9933333333333333,
+   "diff": 0.44333333333333336,
+   "diff_ci95_lo": 0.38666666666666666,
+   "diff_ci95_hi": 0.5,
+   "b_only": 134,
+   "a_only": 1,
+   "p_mcnemar_exact": 6.244813738743402e-39,
+   "discordant_odds_ratio": 89.66666666666667
+  },
+  "fault_type_c_vs_bplus": {
+   "acc_a": 0.94,
+   "acc_b": 0.5,
+   "diff": -0.44,
+   "diff_ci95_lo": -0.55,
+   "diff_ci95_hi": -0.33,
+   "b_only": 4,
+   "a_only": 48,
+   "p_mcnemar_exact": 1.3065282189472782e-10,
+   "discordant_odds_ratio": 0.09278350515463918
+  },
+  "root_top1_c_vs_bplus": {
+   "acc_a": 0.99,
+   "acc_b": 0.79,
+   "diff": -0.2,
+   "diff_ci95_lo": -0.29,
+   "diff_ci95_hi": -0.12,
+   "b_only": 1,
+   "a_only": 21,
+   "p_mcnemar_exact": 1.0967254638671875e-05,
+   "discordant_odds_ratio": 0.06976744186046512
+  },
+  "fault_type_d_vs_bplus": {
+   "acc_a": 0.94,
+   "acc_b": 0.81,
+   "diff": -0.13,
+   "diff_ci95_lo": -0.23,
+   "diff_ci95_hi": -0.04,
+   "b_only": 6,
+   "a_only": 19,
+   "p_mcnemar_exact": 0.01463329792022705,
+   "discordant_odds_ratio": 0.3333333333333333
+  },
+  "root_top1_d_vs_bplus": {
+   "acc_a": 0.99,
+   "acc_b": 0.8,
+   "diff": -0.19,
+   "diff_ci95_lo": -0.28,
+   "diff_ci95_hi": -0.11,
+   "b_only": 1,
+   "a_only": 20,
+   "p_mcnemar_exact": 2.09808349609375e-05,
+   "discordant_odds_ratio": 0.07317073170731707
+  },
+  "fault_type_e_vs_bplus": {
+   "acc_a": 0.94,
+   "acc_b": 0.87,
+   "diff": -0.07,
+   "diff_ci95_lo": -0.15,
+   "diff_ci95_hi": 0.01,
+   "b_only": 5,
+   "a_only": 12,
+   "p_mcnemar_exact": 0.143463134765625,
+   "discordant_odds_ratio": 0.44
+  },
+  "root_top1_e_vs_bplus": {
+   "acc_a": 0.99,
+   "acc_b": 0.87,
+   "diff": -0.12,
+   "diff_ci95_lo": -0.19,
+   "diff_ci95_hi": -0.05,
+   "b_only": 1,
+   "a_only": 13,
+   "p_mcnemar_exact": 0.0018310546875,
+   "discordant_odds_ratio": 0.1111111111111111
+  }
+ },
+ "retrieval": {
+  "bm25": {
+   "recall_at_1": {
+    "estimate": 0.9166666666666666,
+    "ci95_lo": 0.8833333333333333,
+    "ci95_hi": 0.9466666666666667
+   },
+   "recall_at_3": {
+    "estimate": 0.99,
+    "ci95_lo": 0.9766666666666667,
+    "ci95_hi": 1.0
+   }
+  },
+  "dense": {
+   "recall_at_1": {
+    "estimate": 0.9366666666666666,
+    "ci95_lo": 0.91,
+    "ci95_hi": 0.9633333333333334
+   },
+   "recall_at_3": {
+    "estimate": 0.9933333333333333,
+    "ci95_lo": 0.9833333333333333,
+    "ci95_hi": 1.0
+   }
+  },
+  "hybrid": {
+   "recall_at_1": {
+    "estimate": 0.9233333333333333,
+    "ci95_lo": 0.8933333333333333,
+    "ci95_hi": 0.95
+   },
+   "recall_at_3": {
+    "estimate": 0.9933333333333333,
+    "ci95_lo": 0.9833333333333333,
+    "ci95_hi": 1.0
+   }
+  },
+  "paired_hybrid_vs_bm25_at1": {
+   "acc_a": 0.9166666666666666,
+   "acc_b": 0.9233333333333333,
+   "diff": 0.006666666666666667,
+   "diff_ci95_lo": 0.0,
+   "diff_ci95_hi": 0.016666666666666666,
+   "b_only": 2,
+   "a_only": 0,
+   "p_mcnemar_exact": 0.5,
+   "discordant_odds_ratio": 5.0
+  },
+  "paired_hybrid_vs_dense_at1": {
+   "acc_a": 0.9366666666666666,
+   "acc_b": 0.9233333333333333,
+   "diff": -0.013333333333333334,
+   "diff_ci95_lo": -0.02666666666666667,
+   "diff_ci95_hi": -0.0033333333333333335,
+   "b_only": 0,
+   "a_only": 4,
+   "p_mcnemar_exact": 0.125,
+   "discordant_odds_ratio": 0.1111111111111111
+  }
+ },
+ "guardrails": {
+  "pii_planted": 6580,
+  "pii_leak_rate": 0.0,
+  "pii_leak_by_kind": {
+   "card": 0.0,
+   "phone": 0.0,
+   "email": 0.0
+  },
+  "pii_over_redaction_rate": 0.0005382602926633871,
+  "sim_injection_lines": 165,
+  "sim_injection_quarantine_rate": 1.0,
+  "benign_log_lines": 86302,
+  "benign_false_quarantine_rate": 1.158721698222521e-05
+ },
+ "redteam": {
+  "payloads": {
+   "attacks": 40,
+   "filter_block_rate": {
+    "estimate": 0.975,
+    "ci95_lo": 0.925,
+    "ci95_hi": 1.0
+   },
+   "hard_negatives": 25,
+   "hard_negative_false_block_rate": 0.0,
+   "missed": [
+    "rt-035"
+   ],
+   "by_category": {
+    "command": 1.0,
+    "delimiter": 1.0,
+    "exfil": 1.0,
+    "json": 1.0,
+    "misattr": 1.0,
+    "multilingual": 1.0,
+    "obfusc": 1.0,
+    "override": 1.0,
+    "paraphrase": 1.0,
+    "role": 1.0,
+    "split": 0.5,
+    "ticket": 1.0,
+    "tool": 1.0
+   }
+  },
+  "payloads_heldout": {
+   "attacks": 30,
+   "filter_block_rate": {
+    "estimate": 1.0,
+    "ci95_lo": 1.0,
+    "ci95_hi": 1.0
+   },
+   "hard_negatives": 20,
+   "hard_negative_false_block_rate": 0.0,
+   "missed": [],
+   "by_category": {
+    "command": 1.0,
+    "delimiter": 1.0,
+    "exfil": 1.0,
+    "json": 1.0,
+    "misattr": 1.0,
+    "multilingual": 1.0,
+    "obfusc": 1.0,
+    "override": 1.0,
+    "paraphrase": 1.0,
+    "role": 1.0,
+    "social": 1.0,
+    "split": 1.0,
+    "ticket": 1.0,
+    "tool": 1.0
+   }
+  },
+  "action_policy_fuzz": {
+   "cases": 20000,
+   "out_of_policy_accepted": 0
+  }
+ },
+ "time_to_ticket": {
+  "scope": "pipeline only: incident received -> ServiceNow incident created on the local mock over HTTP; no LLM; excludes detection delay and correlator window",
+  "median_ms": {
+   "estimate": 62.72602081298828,
+   "ci95_lo": 58.92753601074219,
+   "ci95_hi": 69.4122314453125
+  },
+  "p95_ms": 115.02344608306888,
+  "per_node_median_ms": {
+   "ingest": 1.7517999999654421,
+   "gather_context": 6.631299999980911,
+   "sanitize": 8.77815000001192,
+   "retrieve": 2.1358999999847583,
+   "diagnose": 0.19889999998667918,
+   "open_ticket": 44.10890000008294,
+   "await_approval": 1.741400000014437
+  }
+ },
+ "detection_delay_median_min": {
+  "estimate": 0.5,
+  "ci95_lo": 0.5,
+  "ci95_hi": 0.5
+ },
+ "cost_per_incident": {
+  "no_llm_path": "0 tokens",
+  "llm": {
+   "c_llm_no_rag": {
+    "provider": "ollama",
+    "model": "qwen2.5:7b-instruct",
+    "incidents": 100,
+    "input_tokens_per_incident": 1323.41,
+    "output_tokens_per_incident": 423.69,
+    "llm_wall_s_per_incident": 9.895635364055634
+   },
+   "d_llm_rag": {
+    "provider": "ollama",
+    "model": "qwen2.5:7b-instruct",
+    "incidents": 100,
+    "input_tokens_per_incident": 1752.15,
+    "output_tokens_per_incident": 424.83,
+    "llm_wall_s_per_incident": 9.932569119930267
+   },
+   "e_full": {
+    "provider": "ollama",
+    "model": "qwen2.5:7b-instruct",
+    "incidents": 100,
+    "input_tokens_per_incident": 1829.73,
+    "output_tokens_per_incident": 422.89,
+    "llm_wall_s_per_incident": 10.008936007022857
+   },
+   "redteam_attack_success": {
+    "with_guardrails": {
+     "estimate": 0.03333333333333333,
+     "ci95_lo": 0.0,
+     "ci95_hi": 0.1
+    },
+    "without_guardrails": {
+     "estimate": 0.1,
+     "ci95_lo": 0.0,
+     "ci95_hi": 0.2
+    }
+   }
+  }
+ },
+ "localization_summary": {
+  "random": {
+   "top1": {
+    "estimate": 0.06,
+    "ci95_lo": 0.03333333333333333,
+    "ci95_hi": 0.08666666666666667
+   },
+   "top3": {
+    "estimate": 0.2633333333333333,
+    "ci95_lo": 0.21333333333333335,
+    "ci95_hi": 0.31333333333333335
+   },
+   "mean_rank": {
+    "estimate": 6.256666666666667,
+    "ci95_lo": 5.8966666666666665,
+    "ci95_hi": 6.613333333333333
+   },
+   "expected_top1": 0.09090909090909091,
+   "expected_top3": 0.2727272727272727
+  },
+  "most_alerting": {
+   "top1": {
+    "estimate": 0.55,
+    "ci95_lo": 0.49333333333333335,
+    "ci95_hi": 0.6066666666666667
+   },
+   "top3": {
+    "estimate": 0.74,
+    "ci95_lo": 0.69,
+    "ci95_hi": 0.79
+   },
+   "mean_rank": {
+    "estimate": 3.0366666666666666,
+    "ci95_lo": 2.6966666666666668,
+    "ci95_hi": 3.406749999999999
+   }
+  },
+  "most_anomalous": {
+   "top1": {
+    "estimate": 0.7133333333333334,
+    "ci95_lo": 0.66,
+    "ci95_hi": 0.7633333333333333
+   },
+   "top3": {
+    "estimate": 0.9833333333333333,
+    "ci95_lo": 0.9666666666666667,
+    "ci95_hi": 0.9966666666666667
+   },
+   "mean_rank": {
+    "estimate": 1.38,
+    "ci95_lo": 1.3066666666666666,
+    "ci95_hi": 1.4566666666666668
+   }
+  },
+  "downstream_most_anomalous": {
+   "top1": {
+    "estimate": 0.9833333333333333,
+    "ci95_lo": 0.9666666666666667,
+    "ci95_hi": 0.9966666666666667
+   },
+   "top3": {
+    "estimate": 1.0,
+    "ci95_lo": 1.0,
+    "ci95_hi": 1.0
+   },
+   "mean_rank": {
+    "estimate": 1.0166666666666666,
+    "ci95_lo": 1.0033333333333334,
+    "ci95_hi": 1.0333333333333334
+   }
+  },
+  "ppr_full": {
+   "top1": {
+    "estimate": 0.9933333333333333,
+    "ci95_lo": 0.9833333333333333,
+    "ci95_hi": 1.0
+   },
+   "top3": {
+    "estimate": 1.0,
+    "ci95_lo": 1.0,
+    "ci95_hi": 1.0
+   },
+   "mean_rank": {
+    "estimate": 1.0066666666666666,
+    "ci95_lo": 1.0,
+    "ci95_hi": 1.0166666666666666
+   }
+  }
+ }
+}

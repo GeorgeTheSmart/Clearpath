@@ -29,5 +29,6 @@ def test_readme_links_are_posix_and_match_committed_table():
     assert "\\" not in block and "](eval/results/latest/metrics.json)" in block
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     # The committed README table is exactly what the committed results produce.
-    committed_block = report.readme_block(ROOT / "eval/results/2026-11-18")
+    newest = max(d for d in (ROOT / "eval/results").glob("20??-??-??") if (d / "metrics.json").exists())
+    committed_block = report.readme_block(newest)
     assert committed_block in readme
