@@ -8,11 +8,12 @@ spec:
     metadata: {labels: {app: clearpath-correlator}}
     spec:
       automountServiceAccountToken: false
-      securityContext: {runAsNonRoot: true, seccompProfile: {type: RuntimeDefault}}
+      securityContext: {runAsNonRoot: true, runAsUser: 65532, runAsGroup: 65532, seccompProfile: {type: RuntimeDefault}}
       containers:
         - name: correlator
           image: "{{ .Values.image.registry }}/clearpath-correlator:{{ .Values.image.tag }}"
-          args: ["-topology", "/topology.json", "-window", "{{ .Values.correlator.window }}", "-lateness", "{{ .Values.correlator.lateness }}",
+          args: ["-topology", "/topology.json", "-window", "{{ .Values.correlator.window }}", "-cross-window", "{{ .Values.correlator.crossWindow }}",
+                 "-lateness", "{{ .Values.correlator.lateness }}", "-open-after", "{{ .Values.correlator.openAfter }}",
                  "-agent", "http://clearpath-agent.{{ .Release.Namespace }}.svc:8000/incidents"]
           ports: [{containerPort: 8081, name: http}]
           readinessProbe: {httpGet: {path: /healthz, port: http}, periodSeconds: 5}

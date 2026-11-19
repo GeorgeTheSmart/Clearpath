@@ -20,7 +20,9 @@ func main() {
 	listen := flag.String("listen", ":8081", "listen address")
 	agent := flag.String("agent", "", "agent incident endpoint (empty = log only)")
 	window := flag.Duration("window", 5*time.Minute, "grouping window")
+	cross := flag.Duration("cross-window", time.Minute, "link window between neighbouring services (<= window; docs/DESIGN.md#percolation)")
 	late := flag.Duration("lateness", 30*time.Second, "tolerated out-of-order arrival")
+	openAfter := flag.Duration("open-after", time.Minute, "announce an incident this long after its first alert, while still open (0 = on close only)")
 	maxFP := flag.Int("max-fingerprints", 500, "distinct fingerprints kept per incident")
 	flag.Parse()
 
@@ -32,7 +34,10 @@ func main() {
 	} else {
 		log.Printf("no topology file (%v): grouping by service only", err)
 	}
-	eng := engine.New(engine.Config{Window: window.Milliseconds(), Lateness: late.Milliseconds(), MaxFingerprints: *maxFP, Neighbors: nb})
+	eng := engine.New(engine.Config{
+		Window: window.Milliseconds(), CrossWindow: cross.Milliseconds(), Lateness: late.Milliseconds(),
+		OpenAfter: openAfter.Milliseconds(), MaxFingerprints: *maxFP, Neighbors: nb,
+	})
 	sink := func(i engine.Incident) { b, _ := json.Marshal(i); log.Printf("incident %s", b) }
 	if *agent != "" {
 		sink = server.HTTPSink(*agent)

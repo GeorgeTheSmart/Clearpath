@@ -41,6 +41,8 @@ Each section states the decision, why I made it, what it costs, and where the co
 * Property 3 checks that `Σ counts + suppressed = total` per incident, and `Σ total = alerts ingested`, even with fully shuffled (arbitrarily late) input.
 * Late alerts are never dropped: they form an incident flagged `late`.
 
+**Announce while open, not only on close.** An incident closes when no linked alert arrives for `Window + Lateness`. Alertmanager re-sends every firing alert (here every 30 s), so an alert that keeps firing keeps its incident open for as long as the outage lasts. With emit-on-close only, the agent would see a sustained outage only after it ended. This was found on the live cluster, where a long-lived burn-rate page held an incident open and nothing reached the agent. With `OpenAfter` (default 60 s, so related alerts gather first), the engine emits one `status: "open"` snapshot and fixes the incident's ID, and the final `closed` emission reuses it, so the agent diagnoses once and recognises the redelivery. If two announced incidents later merge, one ID is kept and the other is listed in `merged_ids`. The check runs on the server's ticker, not per alert, so ingest throughput is unchanged (the benchmark reproduces identical incident counts). Property test: across random scenarios every ID is announced at most once, every announcement is resolved by a close or a merge, and no occurrence is lost.
+
 ### Percolation: why there is a separate cross-service window {#percolation}
 
 My first benchmark merged the whole 200-service fleet into one incident at just 1% background noise. Topology grouping on a connected graph is **site percolation**:
@@ -112,6 +114,30 @@ Thresholds follow the Google SRE workbook multi-window, multi-burn-rate scheme:
 * **Ticket** at 1× over 3 d AND 6 h.
 
 The short window makes the alert stop soon after the burn stops. `tests/test_observability.py` checks the arithmetic, the presence of both windows, and that every alert carries `summary`, `severity`, `service` and a `runbook_url` that exists. ServiceNow urgency and impact map from the same burn rates, so ticket priority reflects budget burn, not alert volume.
+
+### Where the SLIs come from {#sli-source}
+
+Online Boutique exports no Prometheus request metrics, so the first version of these rules (written against `http_server_requests_total`) had **no data on a real cluster**: no burn alert could fire and the chaos suite could not measure anything. The SLIs now come from the **Linkerd proxy** beside every pod (`response_total` with Linkerd's success/failure `classification`, `response_latency_ms` histograms), scraped by `observability/linkerd-podmonitor.yaml`. A mesh measures every request with no application changes, which is also how you would instrument a fleet of services you do not own.
+
+Three details that each broke the rules once, now pinned by `promtool` unit tests (`make rules-test`, `observability/tests/`):
+
+* **rate() before sum().** Summing raw counters first turns every pod restart (a counter reset) into a fake error spike, exactly when a chaos test kills pods.
+* **Zero errors is 0, not absent.** A healthy service has *no* failure series. Without `or vector(0)` on the numerator the ratio disappears, so burn alerts cannot evaluate and "recovered when ratio < x" can never become true.
+* **`le="500.0"`.** Prometheus 3 renders histogram bucket labels as floats; `le="500"` silently matched nothing.
+
+Symptom alerts derive `service` from the pod name for Kubernetes/cAdvisor series (which have no such label), because that is what the correlator groups on. Only rules labelled `clearpath="true"` are routed to the correlator; the chart's built-ins (Watchdog, etcd) would otherwise look like a permanent storm.
+
+## Live path: from a cluster incident to a ticket {#live-path}
+
+`agent/live.LiveSource` is the cluster counterpart of the replay fixture and feeds the **same** localizer, retrieval, guardrails and diagnosis code that the offline evaluation measures:
+
+* **Metrics** from Prometheus on the simulator's 30 s grid, 30 min before the first alert to now: p99 latency and error rate per service from Linkerd, CPU and memory against the container's own limits.
+* **Anomaly scores.** Offline, z-scores use a same-time-of-day baseline from previous days. A fresh cluster has no such history, so live scores are robust z (median/MAD) against the pre-incident window. That catches step changes but not "normal for 9 am, abnormal for 3 am"; the seasonal baseline needs days of retention.
+* **Absence** counts only for a service that reported in the baseline and then stopped (killed, unschedulable), so a service with no HTTP traffic (redis-cart) is not "absent" forever.
+* **Call graph** from the mesh: HTTP/gRPC edges with traffic in the window, plus open TCP connections. cartservice → redis-cart is a single long-lived connection whose open counter never increases, so `increase()` alone would drop the edge the localizer needs when redis is the root.
+* **Logs and events** from the Kubernetes API (`pods/log`, `events`, read-only in one namespace), with levels parsed from Online Boutique's JSON or plain-text logs. Logs of a pod that was already deleted are gone; its absence is itself in the metric evidence.
+
+Approved actions run through the Kubernetes API (`agent/kube.KubeExecutor`: the same patches as `kubectl rollout restart / scale / rollout undo`) with the namespaced Role, when `agent.execute=kube`; the default is `dry-run`.
 
 ## IRSA and OIDC instead of static keys
 

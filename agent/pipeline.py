@@ -10,6 +10,7 @@ human decision. Per-node wall time is recorded for latency accounting.
 from __future__ import annotations
 
 import json
+import re
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -32,6 +33,29 @@ from faults import topology as topo
 
 State = dict[str, Any]
 SLO_TARGET = 0.999
+
+# Incident IDs become file names under state_dir, so they are restricted to a
+# conservative charset: no separators, no "..", no drive letters.
+_INCIDENT_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}")
+
+
+class InvalidIncidentId(ValueError):
+    pass
+
+
+class UnknownIncident(LookupError):
+    pass
+
+
+class NotAwaitingApproval(RuntimeError):
+    """A decision was submitted for an incident that is not paused for one
+    (already remediated or rejected): approvals are single-use."""
+
+
+def check_incident_id(incident_id: str) -> str:
+    if not _INCIDENT_ID.fullmatch(incident_id) or ".." in incident_id:
+        raise InvalidIncidentId(f"invalid incident id: {incident_id!r}")
+    return incident_id
 
 
 @dataclass
@@ -62,16 +86,16 @@ def _timed(name: str, fn: Callable[[State, Deps], State]) -> Callable[[State, De
 
 # ---------------------------------------------------------------- nodes
 def ingest(s: State, d: Deps) -> State:
-    """Accept an incident (from the correlator, or a recorded fixture)."""
-    inc: sim.Incident = s["_incident"]
-    s.update(incident_id=f"inc-{inc.seed}", t_received=time.time(), status="ingested")
+    """Accept an incident: a live one from the correlator (`_source` + id) or a recorded fixture."""
+    if "incident_id" not in s:
+        s["incident_id"] = f"inc-{s['_incident'].seed}"
+    s.update(t_received=time.time(), status="ingested")
     d.audit.append("clearpath-agent", "incident_received", {"incident": s["incident_id"]})
     return s
 
 
 def gather_context(s: State, d: Deps) -> State:
-    inc: sim.Incident = s["_incident"]
-    src = cx.FixtureSource(inc)
+    src: cx.Source = s["_source"] if "_source" in s else cx.FixtureSource(s["_incident"])
     ranking = s["ranking"] if d.use_localizer else [(svc, 0.0) for svc in sorted(topo.SERVICES)]
     ctx = cx.gather(src, s["incident_id"], s["t_det"], ranking)
     if not d.use_localizer:
@@ -130,7 +154,9 @@ def await_approval(s: State, d: Deps) -> State:
     valid = [a for a in proposed if rem.validate(a)[0]]
     rejected = [{"action": a, "reason": rem.validate(a)[1]} for a in proposed if not rem.validate(a)[0]]
     s.update(proposed_actions=valid, rejected_actions=rejected, action_hash=rem.action_hash(s["incident_id"], valid), status="awaiting_approval")
-    d.audit.append("clearpath-agent", "approval_requested", {"incident": s["incident_id"], "actions": valid, "rejected": rejected, "action_hash": s["action_hash"]})
+    d.audit.append(
+        "clearpath-agent", "approval_requested", {"incident": s["incident_id"], "actions": valid, "rejected": rejected, "action_hash": s["action_hash"]}
+    )
     return s
 
 
@@ -143,18 +169,63 @@ def remediate(s: State, d: Deps) -> State:
     return s
 
 
-PRE_APPROVAL = [("ingest", ingest), ("gather_context", gather_context), ("sanitize", sanitize), ("retrieve", retrieve),
-                ("diagnose", diagnose_node), ("open_ticket", open_ticket_node), ("await_approval", await_approval)]
+PRE_APPROVAL = [
+    ("ingest", ingest),
+    ("gather_context", gather_context),
+    ("sanitize", sanitize),
+    ("retrieve", retrieve),
+    ("diagnose", diagnose_node),
+    ("open_ticket", open_ticket_node),
+    ("await_approval", await_approval),
+]
 
 
 def _persist(s: State, d: Deps) -> None:
     d.state_dir.mkdir(parents=True, exist_ok=True)
     pub = {k: v for k, v in s.items() if not k.startswith("_")}
-    (d.state_dir / f"{s['incident_id']}.json").write_text(json.dumps(pub, indent=1, default=str))
+    (d.state_dir / f"{s['incident_id']}.json").write_text(json.dumps(pub, indent=1, default=str), encoding="utf-8", newline="\n")
 
 
 def run(inc: sim.Incident, t_det: int, ranking: list[tuple[str, float]], d: Deps) -> State:
-    s: State = {"_incident": inc, "t_det": t_det, "ranking": ranking}
+    """Recorded incident (the evaluated path)."""
+    return _run({"_incident": inc, "t_det": t_det, "ranking": ranking}, d)
+
+
+def run_live(src: cx.Source, incident_id: str, t_det: int, ranking: list[tuple[str, float]], d: Deps) -> State:
+    """Live incident from the correlator; `src` is an agent.live.LiveSource."""
+    return _run({"_source": src, "incident_id": check_incident_id(incident_id), "t_det": t_det, "ranking": ranking}, d)
+
+
+def triage_only(incident_id: str, triage: dict[str, Any], d: Deps) -> State:
+    """Record a live incident that has no single service to blame (see
+    LiveSource.triage): nothing is proposed, so there is nothing to approve.
+    A fleet-wide anomaly still opens a ticket, pointing at shared infrastructure."""
+    s: State = {"incident_id": check_incident_id(incident_id), "status": f"no_action:{triage['kind']}", "triage": triage, "proposed_actions": []}
+    d.audit.append("clearpath-agent", "triaged", {"incident": incident_id, **triage})
+    if triage["kind"] == "fleet_wide" and d.sn is not None:
+        n, tot = len(triage["anomalous"]), triage["active_services"]
+        t = d.sn.create_incident(
+            {
+                "short_description": f"[Clearpath] fleet-wide anomaly: {n} of {tot} services at once - likely shared infrastructure",
+                "description": (
+                    f"Clearpath incident {incident_id}\n\n{n} of {tot} active services became anomalous together "
+                    f"({', '.join(f'{k}: {v}' for k, v in sorted(triage['anomalous'].items()))}).\n"
+                    "A common-mode failure points outside the service graph (service mesh, network, node, DNS, a shared dependency). "
+                    "No service-level remediation is proposed: restarting or rolling back one service would not help and could make it worse.\n"
+                ),
+                "urgency": "1",
+                "impact": "1",
+                "category": "software",
+                "correlation_id": incident_id,
+            }
+        )
+        s["ticket"] = {"sys_id": t["sys_id"], "number": t["number"], "urgency": t["urgency"], "impact": t["impact"], "affected_cis": 0}
+        d.audit.append("clearpath-agent", "ticket_opened", {"incident": incident_id, "ticket": t["number"]})
+    _persist(s, d)
+    return s
+
+
+def _run(s: State, d: Deps) -> State:
     for name, fn in PRE_APPROVAL:
         s = _timed(name, fn)(s, d)
     _persist(s, d)
@@ -162,7 +233,12 @@ def run(inc: sim.Incident, t_det: int, ranking: list[tuple[str, float]], d: Deps
 
 
 def resume(incident_id: str, approver: str, approved: bool, d: Deps, reason: str = "") -> State:
-    s: State = json.loads((d.state_dir / f"{incident_id}.json").read_text())
+    path = d.state_dir / f"{check_incident_id(incident_id)}.json"
+    if not path.is_file():
+        raise UnknownIncident(incident_id)
+    s: State = json.loads(path.read_text(encoding="utf-8"))
+    if s.get("status") != "awaiting_approval":
+        raise NotAwaitingApproval(f"{incident_id} is {s.get('status')!r}, not awaiting approval")
     s["approval"] = {"approved": approved, "approver": approver, "at": time.time(), "action_hash": s["action_hash"], "reason": reason}
     d.audit.append(approver, "approval_decision", {"incident": incident_id, **s["approval"]})
     if approved:

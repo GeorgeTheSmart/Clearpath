@@ -13,7 +13,7 @@ RULE_FILES = sorted((ROOT / "observability/prometheus").glob("*.yaml"))
 
 def _alerts():
     for f in RULE_FILES:
-        doc = yaml.safe_load(f.read_text())
+        doc = yaml.safe_load(f.read_text(encoding="utf-8"))
         for g in doc["spec"]["groups"]:
             for r in g["rules"]:
                 if "alert" in r:
@@ -30,6 +30,24 @@ def test_every_alert_has_required_annotations_and_existing_runbook():
         assert "service" in lab or "service" in ann, r["alert"]
         assert (ROOT / ann["runbook_url"]).exists(), ann["runbook_url"]
     assert seen >= 11
+
+
+def test_every_alert_is_routed_to_the_correlator():
+    """Alertmanager forwards only clearpath="true" (kps-values.yaml); an alert
+    without the label would be silently dropped."""
+    route = yaml.safe_load((ROOT / "observability/kps-values.yaml").read_text(encoding="utf-8"))["alertmanager"]["config"]["route"]
+    assert route["receiver"] == "null" and route["routes"][0]["matchers"] == ['clearpath="true"']
+    for fname, r in _alerts():
+        assert r["labels"].get("clearpath") == "true", (fname, r["alert"])
+
+
+def test_rules_only_use_metrics_that_exist_on_the_cluster():
+    """Regression: the rules once referenced http_server_requests_total and a
+    baseline metric that nothing exported, so they could never fire."""
+    for f in RULE_FILES:
+        text = f.read_text(encoding="utf-8")
+        for dead in ("http_server_requests_total", "http_server_request_duration_seconds", "clearpath_latency_baseline_seconds"):
+            assert dead not in text, (f.name, dead)
 
 
 def test_symptom_alerts_match_simulator_vocabulary():

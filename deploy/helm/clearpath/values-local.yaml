@@ -1,0 +1,10 @@
+# Overrides for the local kind cluster (`make deploy-clearpath` / `make up-local`).
+# The chart defaults stay conservative (no LLM, dry-run); locally the agent uses
+# the open-source model from `make llm-up` and executes APPROVED actions through
+# the Kubernetes API, so the full loop can be exercised. A human approval is
+# still required for every action.
+agent:
+  llm: ollama
+  llmModel: qwen2.5:7b-instruct
+  ollamaHost: http://clearpath-ollama:11434   # `make llm-up` joins Ollama to the kind network
+  execute: kube

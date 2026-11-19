@@ -232,9 +232,7 @@ def _load(t_abs: np.ndarray, phase: float) -> np.ndarray:
     return 1.0 + 0.40 * np.sin(x) + 0.05 * np.sin(3 * x)
 
 
-def _baseline(
-    rng: np.random.Generator, svc_params: dict[str, dict[str, float]], t_abs: np.ndarray, phase: float
-) -> dict[str, dict[str, np.ndarray]]:
+def _baseline(rng: np.random.Generator, svc_params: dict[str, dict[str, float]], t_abs: np.ndarray, phase: float) -> dict[str, dict[str, np.ndarray]]:
     """Fault-free metrics for one or more same-phase windows. t_abs: (D, W)."""
     load = _load(t_abs, phase)
     out: dict[str, dict[str, np.ndarray]] = {}
@@ -342,7 +340,9 @@ def generate(seed: int, fault_type: str | None = None, root: str | None = None, 
             events.append({"ts": t0, "service": rt, "reason": "ConfigMapUpdated", "message": f"configmap {rt}-config updated"})
             derr[rt] = on * rng.uniform(0.05, 0.6)
         elif ft == "bad_deploy":
-            events.append({"ts": t0, "service": rt, "reason": "ScalingReplicaSet", "message": f"deployment {rt} rolled out revision {int(rng.integers(5, 40))}"})
+            events.append(
+                {"ts": t0, "service": rt, "reason": "ScalingReplicaSet", "message": f"deployment {rt} rolled out revision {int(rng.integers(5, 40))}"}
+            )
             derr[rt] = ramp * rng.uniform(0.02, 0.5)
             dlat[rt] = ramp * base_lat * rng.uniform(0.0, 1.0)
         elif ft == "dns_failure":
@@ -372,7 +372,14 @@ def generate(seed: int, fault_type: str | None = None, root: str | None = None, 
     if rng.random() < 0.3:
         other = [s for s in topo.SERVICES if s != rt]
         d = other[int(rng.integers(len(other)))]
-        events.append({"ts": int(np.clip(t0 + rng.integers(-20, 10), 0, WINDOW - 1)), "service": d, "reason": "ScalingReplicaSet", "message": f"deployment {d} rolled out revision {int(rng.integers(5, 40))}"})
+        events.append(
+            {
+                "ts": int(np.clip(t0 + rng.integers(-20, 10), 0, WINDOW - 1)),
+                "service": d,
+                "reason": "ScalingReplicaSet",
+                "message": f"deployment {d} rolled out revision {int(rng.integers(5, 40))}",
+            }
+        )
 
     alerts = _evaluate_alerts(m, up, restarts, today)
     logs = _make_logs(rng, rt, ft, t0, derr, faulty)
@@ -433,9 +440,7 @@ def static_firing(series: np.ndarray, thr: float) -> np.ndarray:
     return run >= FOR_STEPS
 
 
-def _evaluate_alerts(
-    m: dict[str, dict[str, np.ndarray]], up: dict[str, np.ndarray], restarts: dict[str, np.ndarray], today: int
-) -> list[dict[str, Any]]:
+def _evaluate_alerts(m: dict[str, dict[str, np.ndarray]], up: dict[str, np.ndarray], restarts: dict[str, np.ndarray], today: int) -> list[dict[str, Any]]:
     """Every evaluation of a firing rule re-sends the alert, like Alertmanager does."""
     out: list[dict[str, Any]] = []
     for s in topo.SERVICES:
@@ -456,7 +461,7 @@ def _evaluate_alerts(
 
 
 def _alert(name: str, svc: str, t: int, sev: str) -> dict[str, Any]:
-    fp = hashlib.sha1(f"{name}|{svc}".encode()).hexdigest()[:16]
+    fp = hashlib.sha1(f"{name}|{svc}".encode(), usedforsecurity=False).hexdigest()[:16]  # dedupe key, not a MAC
     return {
         "ts": t,
         "fingerprint": fp,
@@ -477,9 +482,7 @@ def _fill(rng: np.random.Generator, tpl: str, callee: str = "") -> str:
     )
 
 
-def _make_logs(
-    rng: np.random.Generator, rt: str, ft: str, t0: int, derr: dict[str, np.ndarray], faulty: bool
-) -> list[dict[str, Any]]:
+def _make_logs(rng: np.random.Generator, rt: str, ft: str, t0: int, derr: dict[str, np.ndarray], faulty: bool) -> list[dict[str, Any]]:
     logs: list[dict[str, Any]] = []
 
     def add(t: int, svc: str, level: str, msg: str, pii: list[str] | None = None, inj: bool = False) -> None:
@@ -540,7 +543,12 @@ def fault_free_week(seed: int, days: int = 7) -> dict[str, dict[str, np.ndarray]
     rng = np.random.default_rng(seed)
     phase = float(rng.uniform(0, 2 * np.pi))
     svc_params = {
-        s: {"err": float(rng.uniform(0.001, 0.006)), "cpu": float(rng.uniform(0.15, 0.45)), "mem": float(rng.uniform(0.35, 0.6)), "lat_sigma": float(rng.uniform(0.04, 0.14))}
+        s: {
+            "err": float(rng.uniform(0.001, 0.006)),
+            "cpu": float(rng.uniform(0.15, 0.45)),
+            "mem": float(rng.uniform(0.35, 0.6)),
+            "lat_sigma": float(rng.uniform(0.04, 0.14)),
+        }
         for s in topo.SERVICES
     }
     nd = days + HISTORY_DAYS

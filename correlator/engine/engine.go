@@ -57,9 +57,14 @@ type FPAgg struct {
 	Last        int64  `json:"last"`
 }
 
-// Incident is emitted when a component can no longer grow.
+// Incident is emitted when a component can no longer grow (Status "closed"),
+// and, with Config.OpenAfter > 0, once earlier while it is still growing
+// (Status "open"), so a sustained outage is diagnosed while it is happening.
+// An incident keeps the ID of its first emission.
 type Incident struct {
 	ID         string   `json:"id"`
+	Status     string   `json:"status"`               // "open" (snapshot) or "closed" (final)
+	MergedIDs  []string `json:"merged_ids,omitempty"` // other announced incidents absorbed into this one
 	Services   []string `json:"services"`
 	Alerts     []FPAgg  `json:"alerts"`
 	Suppressed int      `json:"suppressed"` // occurrences of fingerprints beyond MaxFingerprints
@@ -71,11 +76,16 @@ type Incident struct {
 
 // Config controls grouping.
 type Config struct {
-	Window          int64               // ms, same-service link window
-	CrossWindow     int64               // ms, neighbour link window; 0 means Window
-	Lateness        int64               // ms of tolerated out-of-order arrival
-	MaxFingerprints int                 // storm suppression: distinct fingerprints kept per incident
-	Neighbors       map[string][]string // undirected service adjacency
+	Window          int64 // ms, same-service link window
+	CrossWindow     int64 // ms, neighbour link window; 0 means Window
+	Lateness        int64 // ms of tolerated out-of-order arrival
+	MaxFingerprints int   // storm suppression: distinct fingerprints kept per incident
+	// OpenAfter (ms): announce an incident this long after its first alert, while
+	// it may still grow. 0 = only emit on close. Without it, an alert that keeps
+	// firing (Alertmanager re-sends it) keeps its incident open indefinitely, so
+	// a sustained outage would never reach the agent until it ended.
+	OpenAfter int64
+	Neighbors map[string][]string // undirected service adjacency
 }
 
 type comp struct {
@@ -88,6 +98,8 @@ type comp struct {
 	last       int64
 	live       int // live segments pointing into this component
 	late       bool
+	id         string   // fixed at the first emission (open snapshot)
+	merged     []string // IDs of other announced components merged into this one
 }
 
 type segment struct {
@@ -190,7 +202,14 @@ func (e *Engine) union(a, b *comp) *comp {
 	ra.last = max64(ra.last, rb.last)
 	ra.live += rb.live
 	ra.late = ra.late || rb.late
-	rb.services, rb.fps = nil, nil
+	switch { // keep one announced ID; remember the other
+	case ra.id == "" && rb.id != "":
+		ra.id = rb.id
+	case ra.id != "" && rb.id != "":
+		ra.merged = append(ra.merged, rb.id)
+	}
+	ra.merged = append(ra.merged, rb.merged...)
+	rb.services, rb.fps, rb.merged = nil, nil, nil
 	e.open--
 	return ra
 }
@@ -282,7 +301,35 @@ func (e *Engine) Advance(now int64) []Incident {
 		e.watermark = now
 		e.started = true
 	}
-	return e.evict(false)
+	out := e.evict(false)
+	return append(out, e.announce()...)
+}
+
+// announce emits an "open" snapshot for every live component older than
+// OpenAfter that has not been announced yet. Called from Advance (the server's
+// ticker), not per alert, so the ingest hot path is unchanged.
+func (e *Engine) announce() []Incident {
+	if e.cfg.OpenAfter <= 0 {
+		return nil
+	}
+	var out []Incident
+	seen := map[*comp]bool{}
+	for _, lst := range e.segs {
+		for _, sg := range lst {
+			r := find(sg.c)
+			if seen[r] || r.id != "" {
+				continue
+			}
+			seen[r] = true
+			if e.watermark-r.first >= e.cfg.OpenAfter {
+				inc := e.snapshot(r, "open")
+				r.id = inc.ID
+				out = append(out, inc)
+			}
+		}
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].ID < out[j].ID })
+	return out
 }
 
 // Flush closes everything (end of a replay).
@@ -328,8 +375,10 @@ func (e *Engine) evict(all bool) []Incident {
 	return out
 }
 
-func (e *Engine) emit(r *comp) Incident {
-	inc := Incident{Suppressed: r.suppressed, Total: r.total, First: r.first, Last: r.last, Late: r.late}
+func (e *Engine) emit(r *comp) Incident { return e.snapshot(r, "closed") }
+
+func (e *Engine) snapshot(r *comp, status string) Incident {
+	inc := Incident{Status: status, Suppressed: r.suppressed, Total: r.total, First: r.first, Last: r.last, Late: r.late}
 	for s := range r.services {
 		inc.Services = append(inc.Services, s)
 	}
@@ -338,12 +387,22 @@ func (e *Engine) emit(r *comp) Incident {
 		inc.Alerts = append(inc.Alerts, *ag)
 	}
 	sort.Slice(inc.Alerts, func(i, j int) bool { return inc.Alerts[i].Fingerprint < inc.Alerts[j].Fingerprint })
-	// Content-derived ID: identical incidents get identical IDs in any arrival order.
-	h := sha1.New()
-	fmt.Fprintf(h, "%d|%v", inc.First, inc.Services)
-	inc.ID = "inc-" + hex.EncodeToString(h.Sum(nil))[:12]
+	if r.id != "" {
+		inc.ID = r.id // announced earlier: keep the ID the agent already knows
+	} else {
+		// Content-derived ID: identical incidents get identical IDs in any arrival order.
+		h := sha1.New()
+		fmt.Fprintf(h, "%d|%v", inc.First, inc.Services)
+		inc.ID = "inc-" + hex.EncodeToString(h.Sum(nil))[:12]
+	}
+	if len(r.merged) > 0 {
+		inc.MergedIDs = append([]string(nil), r.merged...)
+		sort.Strings(inc.MergedIDs)
+	}
 	e.stats.Emitted++
-	e.open--
+	if status == "closed" {
+		e.open--
+	}
 	return inc
 }
 

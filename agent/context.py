@@ -107,8 +107,14 @@ def gather(src: Source, incident_id: str, t_det: int, ranking: list[tuple[str, f
             g["n"] += 1
     for fp, g in sorted(agg.items(), key=lambda kv: kv[1]["first"]):
         lab = g["a"]["labels"]
-        items.append(ContextItem(id=f"alert:{fp}", kind="alert", service=lab["service"],
-                                 text=f"{lab['alertname']} on {lab['service']} ({lab['severity']}), first at step {g['first']}, {g['n']} evaluations"))
+        items.append(
+            ContextItem(
+                id=f"alert:{fp}",
+                kind="alert",
+                service=lab["service"],
+                text=f"{lab['alertname']} on {lab['service']} ({lab['severity']}), first at step {g['first']}, {g['n']} evaluations",
+            )
+        )
     # metrics: most anomalous series, summarised numerically
     z, x = src.zscores(), src.series()
     peaks = sorted(((float(np.nanmax(np.abs(v[t_det:hi]))) if np.isfinite(v[t_det:hi]).any() else 0.0, k) for k, v in z.items()), reverse=True)
@@ -129,7 +135,9 @@ def gather(src: Source, incident_id: str, t_det: int, ranking: list[tuple[str, f
     # kubernetes events
     for i, e in enumerate(src.events()):
         if lo - 20 <= e["ts"] < hi:
-            items.append(ContextItem(id=f"event:{i}", kind="event", service=e["service"], text=f"{e['reason']} on {e['service']} at step {e['ts']}: {e['message']}"))
+            items.append(
+                ContextItem(id=f"event:{i}", kind="event", service=e["service"], text=f"{e['reason']} on {e['service']} at step {e['ts']}: {e['message']}")
+            )
     return Context(incident_id=incident_id, window=(lo, hi), items=items)
 
 
@@ -143,7 +151,7 @@ def sanitize(ctx: Context) -> Context:
     verdicts = injection.score_lines([items[i].text for i in untrusted])
     quarantined: list[str] = []
     red: dict[str, int] = {}
-    for i, v in zip(untrusted, verdicts):
+    for i, v in zip(untrusted, verdicts, strict=True):
         it = items[i]
         if v.blocked:
             quarantined.append(it.id)

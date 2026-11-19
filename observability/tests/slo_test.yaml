@@ -1,0 +1,92 @@
+# promtool unit tests for observability/prometheus/slo-rules.yaml.
+# Availability budget is 0.001, so 14.4x = 1.44% errors. Run: make rules-test
+rule_files: [../../var/rules/slo-rules.yaml]
+evaluation_interval: 30s
+
+tests:
+  # ~1.96% failures for 70 minutes: above every burn threshold, so the fast,
+  # slow and ticket alerts all fire (each AND-ed pair of windows is exceeded).
+  - interval: 30s
+    input_series:
+      - series: 'response_total{namespace="boutique",service="frontend",direction="inbound",classification="success",pod="frontend-a"}'
+        values: '0+100x140'
+      - series: 'response_total{namespace="boutique",service="frontend",direction="inbound",classification="failure",pod="frontend-a"}'
+        values: '0+2x140'
+    promql_expr_test:
+      - expr: round(slo:frontend_error_ratio:rate5m, 0.0001)
+        eval_time: 60m
+        exp_samples: [{labels: '{}', value: 0.0196}]
+    alert_rule_test:
+      - eval_time: 65m
+        alertname: FrontendAvailabilityBudgetBurnFast
+        exp_alerts:
+          - exp_labels: {severity: page, service: frontend, slo: availability, clearpath: "true"}
+            exp_annotations:
+              summary: "frontend is burning its 99.9% availability budget at >14.4x (2% of 30d budget per hour)"
+              runbook_url: runbooks/alert-SLOBurn.md
+
+  # 0.5% failures: above the 1x ticket threshold but below 6x and 14.4x, so
+  # it opens a ticket and does not page.
+  - interval: 30s
+    input_series:
+      - series: 'response_total{namespace="boutique",service="frontend",direction="inbound",classification="success",pod="frontend-a"}'
+        values: '0+199x140'
+      - series: 'response_total{namespace="boutique",service="frontend",direction="inbound",classification="failure",pod="frontend-a"}'
+        values: '0+1x140'
+    alert_rule_test:
+      - eval_time: 65m
+        alertname: FrontendAvailabilityBudgetBurnFast
+        exp_alerts: []
+      - eval_time: 65m
+        alertname: FrontendAvailabilityBudgetBurnSlow
+        exp_alerts: []
+      - eval_time: 65m
+        alertname: FrontendAvailabilityBudgetBurnTicket
+        exp_alerts:
+          - exp_labels: {severity: ticket, service: frontend, slo: availability, clearpath: "true"}
+            exp_annotations:
+              summary: "frontend availability budget burning faster than it accrues over 3 days"
+              runbook_url: runbooks/alert-SLOBurn.md
+
+  # A healthy frontend has NO failure series at all (Linkerd creates it on the
+  # first failure). The ratio must be 0, not absent: an absent SLI silently
+  # disables every burn alert and every "recovered when ratio < x" check.
+  - interval: 30s
+    input_series:
+      - series: 'response_total{namespace="boutique",service="frontend",direction="inbound",classification="success",pod="frontend-a"}'
+        values: '0+100x20'
+    promql_expr_test:
+      - expr: slo:frontend_error_ratio:rate5m
+        eval_time: 6m
+        exp_samples: [{labels: 'slo:frontend_error_ratio:rate5m', value: 0}]
+      - expr: slo:frontend_error_ratio:rate1m
+        eval_time: 6m
+        exp_samples: [{labels: 'slo:frontend_error_ratio:rate1m', value: 0}]
+
+  # Latency SLI on Linkerd's ms histogram, with bucket labels the way
+  # Prometheus 3 renders them (le="500.0"): 10% of requests over 500 ms.
+  - interval: 30s
+    input_series:
+      - series: 'response_latency_ms_bucket{namespace="boutique",service="frontend",direction="inbound",pod="frontend-a",le="500.0"}'
+        values: '0+90x20'
+      - series: 'response_latency_ms_bucket{namespace="boutique",service="frontend",direction="inbound",pod="frontend-a",le="+Inf"}'
+        values: '0+100x20'
+      - series: 'response_latency_ms_count{namespace="boutique",service="frontend",direction="inbound",pod="frontend-a"}'
+        values: '0+100x20'
+    promql_expr_test:
+      - expr: round(slo:frontend_slow_ratio:rate5m, 0.001)
+        eval_time: 6m
+        exp_samples: [{labels: '{}', value: 0.1}]
+
+  # A pod restart resets its counter. Because rate() runs per series before
+  # sum(), the reset is not read as a burst of errors: no page.
+  - interval: 30s
+    input_series:
+      - series: 'response_total{namespace="boutique",service="frontend",direction="inbound",classification="success",pod="frontend-a"}'
+        values: '0+100x60 0+100x79'
+      - series: 'response_total{namespace="boutique",service="frontend",direction="inbound",classification="failure",pod="frontend-a"}'
+        values: '0x140'
+    alert_rule_test:
+      - eval_time: 65m
+        alertname: FrontendAvailabilityBudgetBurnFast
+        exp_alerts: []

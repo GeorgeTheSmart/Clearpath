@@ -5,7 +5,7 @@ would invalidate the CIs, so they are constants.
 
 from __future__ import annotations
 
-from functools import lru_cache
+from functools import cache, lru_cache
 
 import numpy as np
 
@@ -20,7 +20,7 @@ TEST_WEEK_SEED = 501
 SERIES: list[tuple[str, str]] = [(s, m) for s in topo.SERVICES for m in sim.METRICS]
 
 
-@lru_cache(maxsize=None)
+@cache
 def incident(seed: int) -> sim.Incident:
     return sim.generate(seed)
 

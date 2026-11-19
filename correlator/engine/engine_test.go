@@ -242,3 +242,124 @@ func TestTopologyMerge(t *testing.T) {
 		t.Fatalf("got %+v", incs)
 	}
 }
+
+// ---- open-incident announcements (Config.OpenAfter) ------------------------
+
+func alertAt(fp, svc string, ts int64) Alert {
+	return Alert{Fingerprint: fp, Name: "HighErrorRate", Service: svc, Severity: "critical", TS: ts}
+}
+
+// A sustained outage: Alertmanager re-sends a firing alert every 30 s, so the
+// incident never closes. It must still be announced, once, while open.
+func TestSustainedAlertIsAnnouncedWhileOpen(t *testing.T) {
+	e := New(Config{Window: 300, Lateness: 30, OpenAfter: 60})
+	var got []Incident
+	for ts := int64(0); ts <= 1200; ts += 30 {
+		got = append(got, e.Ingest(alertAt("fp", "cartservice", ts))...)
+		got = append(got, e.Advance(ts)...)
+	}
+	if len(got) != 1 || got[0].Status != "open" || got[0].Total != 3 {
+		t.Fatalf("want exactly one open snapshot after 60 (3 occurrences), got %+v", got)
+	}
+	id := got[0].ID
+	closed := e.Advance(1200 + 300 + 30 + 1)
+	if len(closed) != 1 || closed[0].Status != "closed" || closed[0].ID != id || closed[0].Total != 41 {
+		t.Fatalf("close must keep the announced ID and count every occurrence: %+v", closed)
+	}
+}
+
+// Without OpenAfter nothing is emitted until close (original behaviour).
+func TestOpenAfterZeroOnlyEmitsOnClose(t *testing.T) {
+	e := New(Config{Window: 300, Lateness: 30})
+	for ts := int64(0); ts <= 600; ts += 30 {
+		if out := append(e.Ingest(alertAt("fp", "a", ts)), e.Advance(ts)...); len(out) != 0 {
+			t.Fatalf("unexpected emission at %d: %+v", ts, out)
+		}
+	}
+}
+
+// An incident that grows after it was announced keeps its ID, so the agent
+// recognises the redelivery instead of diagnosing it twice.
+func TestGrowthAfterAnnouncementKeepsID(t *testing.T) {
+	nb := map[string][]string{"frontend": {"cartservice"}, "cartservice": {"frontend"}}
+	e := New(Config{Window: 300, CrossWindow: 60, Lateness: 30, OpenAfter: 60, Neighbors: nb})
+	e.Ingest(alertAt("cart", "cartservice", 0))
+	open := e.Advance(60)
+	if len(open) != 1 || open[0].Services[0] != "cartservice" {
+		t.Fatalf("want cartservice announced: %+v", open)
+	}
+	e.Ingest(alertAt("fe", "frontend", 50)) // neighbour within the cross window: same incident
+	closed := e.Flush()
+	if len(closed) != 1 || closed[0].ID != open[0].ID || len(closed[0].Services) != 2 {
+		t.Fatalf("grown incident must keep the announced ID: %+v", closed)
+	}
+}
+
+// Two incidents announced separately that later turn out to be one: one ID is
+// kept and the other is reported, so nothing the agent saw is orphaned.
+func TestMergeOfTwoAnnouncedIncidentsRecordsTheOtherID(t *testing.T) {
+	nb := map[string][]string{"a": {"b"}, "b": {"a"}}
+	e := New(Config{Window: 300, CrossWindow: 100, Lateness: 30, OpenAfter: 60, Neighbors: nb})
+	e.Ingest(alertAt("x", "a", 0))
+	e.Ingest(alertAt("y", "b", 200)) // too far from a@0 to link (cross window 100)
+	var open []Incident
+	for ts := int64(0); ts <= 260; ts += 10 {
+		open = append(open, e.Advance(ts)...)
+	}
+	if len(open) != 2 {
+		t.Fatalf("want two separate announcements, got %+v", open)
+	}
+	e.Ingest(alertAt("x", "a", 250)) // a fires again next to b: the two merge
+	closed := e.Flush()
+	if len(closed) != 1 || len(closed[0].MergedIDs) != 1 {
+		t.Fatalf("want one merged incident naming the absorbed ID: %+v", closed)
+	}
+	ids := map[string]bool{open[0].ID: true, open[1].ID: true}
+	if !ids[closed[0].ID] || !ids[closed[0].MergedIDs[0]] || closed[0].ID == closed[0].MergedIDs[0] {
+		t.Fatalf("kept + merged IDs must be the two announced ones: %+v vs %+v", closed[0], open)
+	}
+}
+
+// Property: on any scenario, each ID is announced at most once, every closed
+// incident that was announced keeps that ID, and no occurrence is lost.
+func TestOpenAnnouncementsProperty(t *testing.T) {
+	f := func(sc scenario) bool {
+		e := New(Config{Window: sc.Window, CrossWindow: sc.Cross, Lateness: sc.Lateness, OpenAfter: 1 + sc.Window/2, Neighbors: sc.Neighbors})
+		var out []Incident
+		for _, a := range sc.Alerts {
+			out = append(out, e.Ingest(a)...)
+			out = append(out, e.Advance(a.TS)...)
+		}
+		out = append(out, e.Flush()...)
+		announced, total := map[string]int{}, 0
+		absorbed := map[string]bool{}
+		for _, inc := range out {
+			if inc.Status == "open" {
+				announced[inc.ID]++
+				continue
+			}
+			total += inc.Total
+			for _, m := range inc.MergedIDs {
+				absorbed[m] = true
+			}
+		}
+		for id, n := range announced {
+			if n != 1 {
+				return false
+			}
+			closedWithID := false
+			for _, inc := range out {
+				if inc.Status == "closed" && inc.ID == id {
+					closedWithID = true
+				}
+			}
+			if !closedWithID && !absorbed[id] { // every announcement is resolved by a close or a merge
+				return false
+			}
+		}
+		return total == len(sc.Alerts)
+	}
+	if err := quick.Check(f, &quick.Config{MaxCount: 300}); err != nil {
+		t.Fatal(err)
+	}
+}

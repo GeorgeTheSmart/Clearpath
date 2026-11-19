@@ -1,8 +1,11 @@
 -r requirements.txt
 pytest>=8
 hypothesis>=6
-mypy>=1.10
-ruff>=0.5
+# Linters/type checkers are pinned exactly: new releases add rules, so an
+# unpinned version turns a green CI red with no code change. Keep in sync with
+# .pre-commit-config.yaml.
+mypy==2.4.1
+ruff==0.17.5
 pre-commit>=3
 types-PyYAML
-langgraph>=0.2  # optional: agent/langgraph_app.py
+langgraph>=1.2,<2  # optional: agent/langgraph_app.py (needs allowed_msgpack_modules)

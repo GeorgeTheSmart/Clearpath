@@ -22,7 +22,6 @@ import numpy as np
 from agent import context as cx
 from agent import remediation as rem
 from agent.audit import AuditLog
-from agent.diagnose import render_context
 from agent.guardrails import injection, pii
 from agent.llm import from_env
 from agent.pipeline import Deps, run
@@ -62,7 +61,7 @@ def guardrail_metrics(incs: list[sim.Incident]) -> dict[str, Any]:
             by_svc[line["service"]].append(line)
         for lines in by_svc.values():
             verdicts = injection.score_lines([x["msg"] for x in lines])
-            for line, v in zip(lines, verdicts):
+            for line, v in zip(lines, verdicts, strict=True):
                 if line["injection"]:
                     inj_total += 1
                     inj_caught += v.blocked
@@ -95,19 +94,19 @@ def guardrail_metrics(incs: list[sim.Incident]) -> dict[str, Any]:
 def redteam_metrics() -> dict[str, Any]:
     out: dict[str, Any] = {}
     for name in ("payloads.jsonl", "payloads_heldout.jsonl"):
-        rows = [json.loads(x) for x in (ROOT / "eval/redteam" / name).read_text().splitlines()]
+        rows = [json.loads(x) for x in (ROOT / "eval/redteam" / name).read_text(encoding="utf-8").splitlines()]
         att = [r for r in rows if r["attack"]]
         ben = [r for r in rows if not r["attack"]]
         v = injection.score_lines([r["text"] for r in att])
         by_cat: dict[str, list[bool]] = defaultdict(list)
-        for r, x in zip(att, v):
+        for r, x in zip(att, v, strict=True):
             by_cat[r["category"]].append(x.blocked)
         out[name.replace(".jsonl", "")] = {
             "attacks": len(att),
             "filter_block_rate": stats.bootstrap_ci([x.blocked for x in v]).as_dict(),
             "hard_negatives": len(ben),
             "hard_negative_false_block_rate": float(np.mean([injection.score(r["text"]).blocked for r in ben])),
-            "missed": [r["id"] for r, x in zip(att, v) if not x.blocked],
+            "missed": [r["id"] for r, x in zip(att, v, strict=True) if not x.blocked],
             "by_category": {k: float(np.mean(b)) for k, b in sorted(by_cat.items())},
         }
     # Action policy fuzz: random (kind, target, replicas, extras); count accepted outside policy.
@@ -122,15 +121,21 @@ def redteam_metrics() -> dict[str, Any]:
         if rng.random() < 0.1:
             a["cmd"] = "rm -rf /"
         n += 1
-        in_policy = (a["kind"] in rem.ALLOWED and a["target"] in topo.SERVICES and set(a) <= {"kind", "target", "replicas"}
-                     and (a["kind"] != "scale" or (isinstance(a.get("replicas"), int) and 1 <= a["replicas"] <= 10)))
+        in_policy = (
+            a["kind"] in rem.ALLOWED
+            and a["target"] in topo.SERVICES
+            and set(a) <= {"kind", "target", "replicas"}
+            and (a["kind"] != "scale" or (isinstance(a.get("replicas"), int) and 1 <= a["replicas"] <= 10))
+        )
         if rem.validate(a)[0] and not in_policy:
             bad_accepted += 1
     out["action_policy_fuzz"] = {"cases": n, "out_of_policy_accepted": bad_accepted}
     return out
 
 
-def llm_redteam(llm: Any, retriever: Retriever, incs: list[sim.Incident], rankings: dict[str, Any], limit: int) -> dict[str, Any]:  # pragma: no cover - needs an LLM
+def llm_redteam(
+    llm: Any, retriever: Retriever, incs: list[sim.Incident], rankings: dict[str, Any], limit: int
+) -> dict[str, Any]:  # pragma: no cover - needs an LLM
     """Attack success rate with and without guardrails (requires an LLM).
 
     Each held-out payload is planted as a log line on the root service; an
@@ -139,9 +144,9 @@ def llm_redteam(llm: Any, retriever: Retriever, incs: list[sim.Incident], rankin
     """
     from agent.diagnose import diagnose
 
-    rows = [json.loads(x) for x in (ROOT / "eval/redteam/payloads_heldout.jsonl").read_text().splitlines() if json.loads(x)["attack"]]
+    rows = [json.loads(x) for x in (ROOT / "eval/redteam/payloads_heldout.jsonl").read_text(encoding="utf-8").splitlines() if json.loads(x)["attack"]]
     res: dict[str, list[bool]] = {"with_guardrails": [], "without_guardrails": []}
-    for inc, row in zip(incs[:limit], rows * (limit // len(rows) + 1)):
+    for inc, row in zip(incs[:limit], rows * (limit // len(rows) + 1), strict=False):
         r = rankings[str(inc.seed)]
         ctx = cx.gather(cx.FixtureSource(inc), f"inc-{inc.seed}", r["t_det"], [tuple(x) for x in r["ranking"]])
         base = diagnose(llm, cx.sanitize(ctx), list(topo.SERVICES), [], {"alert", "metric", "log", "event", "loc"})
@@ -159,15 +164,14 @@ def main() -> None:
     ap.add_argument("--llm-limit", type=int, default=100)
     args = ap.parse_args()
     out_dir: Path = args.out_dir
-    loc = json.loads((out_dir / "localization.json").read_text())
-    det = json.loads((out_dir / "detection.json").read_text())
-    rankings = json.loads((out_dir / "localizer_rankings.json").read_text())
+    loc = json.loads((out_dir / "localization.json").read_text(encoding="utf-8"))
+    det = json.loads((out_dir / "detection.json").read_text(encoding="utf-8"))
+    rankings = json.loads((out_dir / "localizer_rankings.json").read_text(encoding="utf-8"))
     test = ds.incidents(ds.TEST_SEEDS)
     retriever = Retriever(load_runbooks(ROOT / "runbooks"))
 
-    port = random.randint(20000, 40000)
-    srv = mock.serve(port)
-    sn = ServiceNow(f"http://127.0.0.1:{port}", "admin", "admin")
+    srv = mock.serve(0)  # OS-assigned free port
+    sn = ServiceNow(f"http://127.0.0.1:{srv.server_address[1]}", "admin", "admin")
     tmp = out_dir / "_run"
     systems: dict[str, dict[str, list[Any]]] = defaultdict(lambda: defaultdict(list))
     recall: dict[str, list[tuple[bool, bool]]] = defaultdict(list)
@@ -210,7 +214,15 @@ def main() -> None:
     llm_rows: dict[str, Any] = {}
     if llm is not None:  # pragma: no cover - needs network/LLM
         for name, use_rag, use_loc in (("c_llm_no_rag", False, False), ("d_llm_rag", True, False), ("e_full", True, True)):
-            d = Deps(retriever=retriever, llm=llm, sn=sn, audit=AuditLog(tmp / f"audit_{name}.jsonl"), state_dir=tmp / f"state_{name}", use_rag=use_rag, use_localizer=use_loc)
+            d = Deps(
+                retriever=retriever,
+                llm=llm,
+                sn=sn,
+                audit=AuditLog(tmp / f"audit_{name}.jsonl"),
+                state_dir=tmp / f"state_{name}",
+                use_rag=use_rag,
+                use_localizer=use_loc,
+            )
             u0 = (llm.usage.input_tokens, llm.usage.output_tokens, llm.usage.wall_s)
             for inc in test[: args.llm_limit]:
                 rr = rankings[str(inc.seed)]
@@ -221,16 +233,24 @@ def main() -> None:
                 halluc[name].append(st["verification"]["hallucination_rate"])
                 systems[name]["degraded"].append(dg["degraded"])
             n = min(args.llm_limit, len(test))
-            llm_rows[name] = {"provider": llm.name, "model": getattr(llm, "model", "?"), "incidents": n,
-                              "input_tokens_per_incident": (llm.usage.input_tokens - u0[0]) / n,
-                              "output_tokens_per_incident": (llm.usage.output_tokens - u0[1]) / n,
-                              "llm_wall_s_per_incident": (llm.usage.wall_s - u0[2]) / n}
+            llm_rows[name] = {
+                "provider": llm.name,
+                "model": getattr(llm, "model", "?"),
+                "incidents": n,
+                "input_tokens_per_incident": (llm.usage.input_tokens - u0[0]) / n,
+                "output_tokens_per_incident": (llm.usage.output_tokens - u0[1]) / n,
+                "llm_wall_s_per_incident": (llm.usage.wall_s - u0[2]) / n,
+            }
         llm_rows["redteam_attack_success"] = llm_redteam(llm, retriever, test, rankings, 30)
     srv.shutdown()
 
     def summarise(name: str, d: dict[str, list[Any]]) -> dict[str, Any]:
         rk = np.array(d["root_rank"])
-        o: dict[str, Any] = {"n": int(rk.size), "root_top1": stats.bootstrap_ci(rk <= 1).as_dict(), "fault_type_acc": stats.bootstrap_ci(np.array(d["fault_ok"], float)).as_dict()}
+        o: dict[str, Any] = {
+            "n": int(rk.size),
+            "root_top1": stats.bootstrap_ci(rk <= 1).as_dict(),
+            "fault_type_acc": stats.bootstrap_ci(np.array(d["fault_ok"], float)).as_dict(),
+        }
         if not name.startswith(("c_", "d_", "e_")):
             o["root_top3"] = stats.bootstrap_ci(rk <= 3).as_dict()
         if name in halluc:
@@ -246,20 +266,40 @@ def main() -> None:
     for name in ("c_llm_no_rag", "d_llm_rag", "e_full"):
         sys_out.setdefault(name, {"status": "not run: no LLM configured in this environment (set CLEARPATH_LLM)"})
     paired = {
-        "fault_type_bplus_vs_a": stats.paired_compare(systems["a_static_most_alerting"]["fault_ok"], systems["b_plus_localizer_rag_no_llm"]["fault_ok"]).as_dict(),
+        "fault_type_bplus_vs_a": stats.paired_compare(
+            systems["a_static_most_alerting"]["fault_ok"], systems["b_plus_localizer_rag_no_llm"]["fault_ok"]
+        ).as_dict(),
         "fault_type_bplus_vs_b": stats.paired_compare(systems["b_localizer"]["fault_ok"], systems["b_plus_localizer_rag_no_llm"]["fault_ok"]).as_dict(),
-        "root_top1_b_vs_a": stats.paired_compare(np.array(systems["a_static_most_alerting"]["root_rank"]) <= 1, np.array(systems["b_localizer"]["root_rank"]) <= 1).as_dict(),
+        "root_top1_b_vs_a": stats.paired_compare(
+            np.array(systems["a_static_most_alerting"]["root_rank"]) <= 1, np.array(systems["b_localizer"]["root_rank"]) <= 1
+        ).as_dict(),
     }
-    if "e_full" in systems:  # pragma: no cover
-        n = len(systems["e_full"]["fault_ok"])
-        paired["fault_type_e_vs_bplus"] = stats.paired_compare(systems["b_plus_localizer_rag_no_llm"]["fault_ok"][:n], systems["e_full"]["fault_ok"]).as_dict()
-    retr: dict[str, Any] = {m: {"recall_at_1": stats.bootstrap_ci([a for a, _ in v]).as_dict(), "recall_at_3": stats.bootstrap_ci([b for _, b in v]).as_dict()} for m, v in recall.items()}
+    # Does the LLM add anything over the deterministic pipeline? Paired on the
+    # same first-n TEST incidents (b+ ran on all of them).
+    bplus = systems["b_plus_localizer_rag_no_llm"]
+    for name in ("c_llm_no_rag", "d_llm_rag", "e_full"):
+        if name in systems:  # pragma: no cover - needs an LLM
+            n = len(systems[name]["fault_ok"])
+            tag = name.split("_")[0]
+            paired[f"fault_type_{tag}_vs_bplus"] = stats.paired_compare(bplus["fault_ok"][:n], systems[name]["fault_ok"]).as_dict()
+            paired[f"root_top1_{tag}_vs_bplus"] = stats.paired_compare(
+                np.array(bplus["root_rank"][:n]) <= 1, np.array(systems[name]["root_rank"]) <= 1
+            ).as_dict()
+    retr: dict[str, Any] = {
+        m: {"recall_at_1": stats.bootstrap_ci([a for a, _ in v]).as_dict(), "recall_at_3": stats.bootstrap_ci([b for _, b in v]).as_dict()}
+        for m, v in recall.items()
+    }
     retr["paired_hybrid_vs_bm25_at1"] = stats.paired_compare([a for a, _ in recall["bm25"]], [a for a, _ in recall["hybrid"]]).as_dict()
     retr["paired_hybrid_vs_dense_at1"] = stats.paired_compare([a for a, _ in recall["dense"]], [a for a, _ in recall["hybrid"]]).as_dict()
     seas = det["detectors"]["seasonal_robust_z"]
     metrics = {
         "generated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        "dataset": {"test_incidents": len(test), "dev_incidents": len(ds.DEV_SEEDS), "generator_version": sim.GENERATOR_VERSION, "source": "seeded simulator (faults/sim.py), not a live cluster"},
+        "dataset": {
+            "test_incidents": len(test),
+            "dev_incidents": len(ds.DEV_SEEDS),
+            "generator_version": sim.GENERATOR_VERSION,
+            "source": "seeded simulator (faults/sim.py), not a live cluster",
+        },
         "systems": sys_out,
         "paired": paired,
         "retrieval": retr,
@@ -275,7 +315,7 @@ def main() -> None:
         "cost_per_incident": {"no_llm_path": "0 tokens", "llm": llm_rows or "not run"},
         "localization_summary": {k: loc["methods"][k] for k in ("random", "most_alerting", "most_anomalous", "downstream_most_anomalous", "ppr_full")},
     }
-    (out_dir / "metrics.json").write_text(json.dumps(metrics, indent=1))
+    (out_dir / "metrics.json").write_text(json.dumps(metrics, indent=1), encoding="utf-8", newline="\n")
     from eval.report import write_report
 
     write_report(out_dir)

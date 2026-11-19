@@ -12,12 +12,12 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import random
 from pathlib import Path
 
+from agent import remediation as rem
 from agent.audit import AuditLog
 from agent.llm import from_env
-from agent.pipeline import Deps, resume, run
+from agent.pipeline import Deps, InvalidIncidentId, NotAwaitingApproval, UnknownIncident, resume, run
 from agent.servicenow import ServiceNow
 from eval import datasets as ds
 from localize import rca
@@ -30,9 +30,8 @@ VAR = Path(os.environ.get("CLEARPATH_VAR", "var"))
 def _sn(args: argparse.Namespace) -> ServiceNow:
     if args.servicenow_url:
         return ServiceNow(args.servicenow_url, os.environ["SN_USER"], os.environ["SN_PASSWORD"])
-    port = random.randint(20000, 40000)
-    mock.serve(port)
-    return ServiceNow(f"http://127.0.0.1:{port}", "admin", "admin")
+    srv = mock.serve(0)  # OS-assigned free port
+    return ServiceNow(f"http://127.0.0.1:{srv.server_address[1]}", "admin", "admin")
 
 
 def cmd_replay(args: argparse.Namespace) -> None:
@@ -59,7 +58,10 @@ def cmd_replay(args: argparse.Namespace) -> None:
 
 def cmd_approve(args: argparse.Namespace) -> None:
     d = Deps.default(sn=None, audit=AuditLog(VAR / "audit.jsonl"), state_dir=VAR / "state")
-    s = resume(args.incident, args.user, not args.reject, d, args.reason)
+    try:
+        s = resume(args.incident, args.user, not args.reject, d, args.reason)
+    except (InvalidIncidentId, UnknownIncident, NotAwaitingApproval, rem.NotApproved) as e:
+        raise SystemExit(f"approve: {type(e).__name__}: {e}") from e
     print(json.dumps({k: s.get(k) for k in ("status", "approval", "remediation")}, indent=1))
 
 

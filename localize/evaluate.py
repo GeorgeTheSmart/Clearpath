@@ -42,7 +42,9 @@ def features(inc: sim.Incident, thr: float) -> tuple[np.ndarray, list[tuple[int,
     return A, rca.build_graph(inc.trace_edges), t_det
 
 
-def perturb(kind: str, inc: sim.Incident, A: np.ndarray, E: list[tuple[int, int]], t: int, rng: np.random.Generator) -> tuple[np.ndarray, list[tuple[int, int]]]:
+def perturb(
+    kind: str, inc: sim.Incident, A: np.ndarray, E: list[tuple[int, int]], t: int, rng: np.random.Generator
+) -> tuple[np.ndarray, list[tuple[int, int]]]:
     """Robustness perturbations, fixed before looking at their results.
 
     drop_edges: 30% of observed trace edges missing (sampling, uninstrumented hop).
@@ -56,7 +58,7 @@ def perturb(kind: str, inc: sim.Incident, A: np.ndarray, E: list[tuple[int, int]
     r = rca.IDX[inc.root]
     if kind == "drop_edges":
         keep = rng.random(len(E)) >= 0.3
-        E = [e for e, k in zip(E, keep) if k]
+        E = [e for e, k in zip(E, keep, strict=True) if k]
     elif kind in ("concurrent_anomaly", "downstream_confounder"):
         others = [i for i in range(N_SVC) if i != r]
         if kind == "downstream_confounder":
@@ -84,7 +86,7 @@ def evaluate_rankings(ranks: list[int]) -> dict[str, Any]:
 
 
 def main(out_dir: Path) -> dict[str, Any]:
-    det = json.loads((out_dir / "detection.json").read_text())
+    det = json.loads((out_dir / "detection.json").read_text(encoding="utf-8"))
     thr = float(det["detectors"]["seasonal_robust_z"]["threshold"])
     dev = [(i, *features(i, thr)) for i in ds.incidents(ds.DEV_SEEDS)]
     test = [(i, *features(i, thr)) for i in ds.incidents(ds.TEST_SEEDS)]
@@ -168,16 +170,21 @@ def main(out_dir: Path) -> dict[str, Any]:
         "ranks": {m: r for m, r in methods.items()},
     }
     out_dir.mkdir(parents=True, exist_ok=True)
-    (out_dir / "localization.json").write_text(json.dumps(out, indent=1))
-    (out_dir / "localizer_rankings.json").write_text(json.dumps(rankings_out))
+    (out_dir / "localization.json").write_text(json.dumps(out, indent=1), encoding="utf-8", newline="\n")
+    (out_dir / "localizer_rankings.json").write_text(json.dumps(rankings_out), encoding="utf-8", newline="\n")
     return out
 
 
 if __name__ == "__main__":
     o = main(Path(sys.argv[1]) if len(sys.argv) > 1 else Path("eval/results/latest"))
     for kind, rr in o["robustness"].items():
-        print(kind, {m: round(v["top1"]["estimate"], 3) for m, v in rr.items() if "top1" in v},
-              "ppr-vs-downstream top1 diff=%.3f p=%.2g" % (rr["ppr_vs_downstream_top1"]["diff"], rr["ppr_vs_downstream_top1"]["p_mcnemar_exact"]))
+        print(
+            kind,
+            {m: round(v["top1"]["estimate"], 3) for m, v in rr.items() if "top1" in v},
+            f"ppr-vs-downstream top1 diff={rr['ppr_vs_downstream_top1']['diff']:.3f} p={rr['ppr_vs_downstream_top1']['p_mcnemar_exact']:.2g}",
+        )
     for m, r in o["methods"].items():
-        print(f"{m:30s} top1={r['top1']['estimate']:.3f} [{r['top1']['ci95_lo']:.3f},{r['top1']['ci95_hi']:.3f}] "
-              f"top3={r['top3']['estimate']:.3f} mean_rank={r['mean_rank']['estimate']:.2f}")
+        print(
+            f"{m:30s} top1={r['top1']['estimate']:.3f} [{r['top1']['ci95_lo']:.3f},{r['top1']['ci95_hi']:.3f}] "
+            f"top3={r['top3']['estimate']:.3f} mean_rank={r['mean_rank']['estimate']:.2f}"
+        )

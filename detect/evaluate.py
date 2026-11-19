@@ -36,9 +36,7 @@ WARM = 60  # steps excluded at the start of each incident window
 STEP_MIN = sim.STEP_S / 60
 
 STATIC_THR = np.array([sim.STATIC_RULES[r][1](s) for s, m in ds.SERIES for r in sim.STATIC_RULES if sim.STATIC_RULES[r][0] == m])
-DEPLOYED = np.array(
-    [any(sim.STATIC_RULES[r][0] == m and r in sim.COVERAGE[s] for r in sim.STATIC_RULES) for s, m in ds.SERIES]
-)
+DEPLOYED = np.array([any(sim.STATIC_RULES[r][0] == m and r in sim.COVERAGE[s] for r in sim.STATIC_RULES) for s, m in ds.SERIES])
 METRIC_OF = [m for _, m in ds.SERIES]
 
 
@@ -143,10 +141,10 @@ def calibrate(score: np.ndarray, budget: float) -> tuple[float, float]:
 def incident_alarms(name: str, incs: list[sim.Incident], thr: float, cache: dict[str, np.ndarray]) -> np.ndarray:
     """(N, S, n) alarm masks for all incidents, plus absent-target alarms."""
     if name not in cache:
-        xs, hs = zip(*(ds.stack(i) for i in incs))
+        xs, hs = zip(*(ds.stack(i) for i in incs), strict=True)
         X, Hh = np.concatenate(xs), np.concatenate(hs)  # (N*S, n), (N*S, H, n)
         if name == "static_threshold":
-            sc = np.vstack([_static(x, h) for x, h in zip(xs, hs)])
+            sc = np.vstack([_static(x, h) for x, h in zip(xs, hs, strict=True)])
         else:
             # vectorise across incidents; the scorers are per-row independent
             S = len(ds.SERIES)
@@ -197,7 +195,7 @@ def summarise(alarm: np.ndarray, incs: list[sim.Incident]) -> dict[str, Any]:
     hit10, hit30, pre_fp, pre_hours = [], [], 0, 0.0
     root_hit: list[bool] = []
     per_ft: dict[str, list[bool]] = defaultdict(list)
-    for a, inc in zip(alarm, incs):
+    for a, inc in zip(alarm, incs, strict=True):
         any_alarm = a.any(axis=0)
         post = np.flatnonzero(any_alarm[inc.t0 : inc.t0 + 60])
         delay = float(post[0]) * STEP_MIN if post.size else float("inf")
@@ -236,16 +234,19 @@ def main(out_dir: Path) -> dict[str, Any]:
         r = summarise(incident_alarms(name, test, thr, cache), test)
         r.update({"threshold": thr, "fp_per_day_dev_week": dev_fp, "fp_per_day_test_week": fp_per_day(test_w[name], thr)})
         results[name] = r
-        print(f"{name:20s} thr={thr:8.3f} fp/day dev={dev_fp:.2f} test={r['fp_per_day_test_week']:.2f} "
-              f"recall@10m={r['recall_10min']['estimate']:.3f} root@10m={r['root_recall_10min']['estimate']:.3f} med_delay={r['delay_median_min'] and r['delay_median_min']['estimate']}",
-              file=sys.stderr)
+        print(
+            f"{name:20s} thr={thr:8.3f} fp/day dev={dev_fp:.2f} test={r['fp_per_day_test_week']:.2f} "
+            f"recall@10m={r['recall_10min']['estimate']:.3f} root@10m={r['root_recall_10min']['estimate']:.3f} med_delay={r['delay_median_min'] and r['delay_median_min']['estimate']}",
+            file=sys.stderr,
+        )
     # The deployed rules exactly as written (threshold x1, real coverage).
     asw = incident_alarms("static_threshold", test, 1.0, cache)
     asw &= DEPLOYED[None, :, None] | np.stack([np.isnan(ds.stack(i)[0]) for i in test])
     r = summarise(asw, test)
     sc_t = test_w["static_threshold"] * DEPLOYED[:, None]
-    r.update({"threshold": 1.0, "fp_per_day_dev_week": fp_per_day(dev_w["static_threshold"] * DEPLOYED[:, None], 1.0),
-              "fp_per_day_test_week": fp_per_day(sc_t, 1.0)})
+    r.update(
+        {"threshold": 1.0, "fp_per_day_dev_week": fp_per_day(dev_w["static_threshold"] * DEPLOYED[:, None], 1.0), "fp_per_day_test_week": fp_per_day(sc_t, 1.0)}
+    )
     results["static_as_deployed"] = r
     # Recall vs false-alarm curve on TEST (for the README plot); thresholds swept.
     curves: dict[str, list[dict[str, float]]] = {}
@@ -254,7 +255,7 @@ def main(out_dir: Path) -> dict[str, Any]:
         for f in np.geomspace(0.6, 2.5, 12):
             thr = float(results[name]["threshold"] * f)
             a = incident_alarms(name, test, thr, cache)
-            hits = np.mean([(a_.any(axis=0)[i.t0 : i.t0 + 20]).any() for a_, i in zip(a, test)])
+            hits = np.mean([(a_.any(axis=0)[i.t0 : i.t0 + 20]).any() for a_, i in zip(a, test, strict=True)])
             pts.append({"threshold": thr, "fp_per_day": fp_per_day(test_w[name], thr), "recall_10min": float(hits)})
         curves[name] = sorted(pts, key=lambda p: p["fp_per_day"])
     # Paired tests on recall@10min vs the calibrated static baseline.
@@ -262,16 +263,21 @@ def main(out_dir: Path) -> dict[str, Any]:
     comps = {n: stats.paired_compare(base, results[n]["root_hits_10min"]) for n in SCORERS if n != "static_threshold"}
     adj = stats.holm({n: c.p_mcnemar_exact for n, c in comps.items()})
     out = {
-        "protocol": {"budget_pages_per_day": BUDGET, "series": len(ds.SERIES), "test_incidents": len(test),
-                     "dev_week_seed": ds.DEV_WEEK_SEED, "test_week_seed": ds.TEST_WEEK_SEED,
-                     "generator_version": sim.GENERATOR_VERSION},
+        "protocol": {
+            "budget_pages_per_day": BUDGET,
+            "series": len(ds.SERIES),
+            "test_incidents": len(test),
+            "dev_week_seed": ds.DEV_WEEK_SEED,
+            "test_week_seed": ds.TEST_WEEK_SEED,
+            "generator_version": sim.GENERATOR_VERSION,
+        },
         "detectors": results,
         "paired_root_recall_vs_static_calibrated": {n: {**c.as_dict(), "p_holm": adj[n]} for n, c in comps.items()},
         "curves_test": curves,
         "runtime_s": time.time() - t_start,
     }
     out_dir.mkdir(parents=True, exist_ok=True)
-    (out_dir / "detection.json").write_text(json.dumps(out, indent=1))
+    (out_dir / "detection.json").write_text(json.dumps(out, indent=1), encoding="utf-8", newline="\n")
     return out
 
 

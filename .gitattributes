@@ -1,0 +1,8 @@
+# Keep LF everywhere: CRLF breaks shell scripts and Makefile recipes run by
+# bash (`$'\r': command not found`), and a Windows checkout with
+# core.autocrlf=true would otherwise convert them.
+* text=auto eol=lf
+*.sh text eol=lf
+Makefile text eol=lf
+*.png binary
+*.jpg binary

@@ -1,0 +1,25 @@
+# Scrape every Linkerd data-plane proxy. These are Clearpath's request-level
+# SLIs: Online Boutique exports no Prometheus request metrics itself, so the
+# mesh measures every request instead (response_total, response_latency_ms).
+# Raw proxy metrics carry no Kubernetes labels; the relabelings attach them,
+# mirroring Linkerd's own scrape config (linkerd-viz).
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: linkerd-proxy
+  namespace: monitoring
+spec:
+  namespaceSelector: {any: true}
+  selector:
+    matchExpressions:
+      - {key: linkerd.io/control-plane-ns, operator: Exists}
+  podMetricsEndpoints:
+    - port: linkerd-admin
+      path: /metrics
+      interval: 15s
+      relabelings:
+        - {sourceLabels: [__meta_kubernetes_namespace], targetLabel: namespace}
+        - {sourceLabels: [__meta_kubernetes_pod_name], targetLabel: pod}
+        - {sourceLabels: [__meta_kubernetes_pod_label_linkerd_io_proxy_deployment], targetLabel: deployment}
+        # `service` is the label Clearpath's alerts and correlator key on
+        - {sourceLabels: [__meta_kubernetes_pod_label_linkerd_io_proxy_deployment], targetLabel: service}

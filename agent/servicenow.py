@@ -45,8 +45,9 @@ class ServiceNow:
             url += "?" + urllib.parse.urlencode(query)
         auth = base64.b64encode(f"{self.user}:{self.password}".encode()).decode()
         data = json.dumps(body).encode() if body is not None else None
-        req = urllib.request.Request(url, data=data, method=method,
-                                     headers={"Authorization": f"Basic {auth}", "Accept": "application/json", "Content-Type": "application/json"})
+        req = urllib.request.Request(
+            url, data=data, method=method, headers={"Authorization": f"Basic {auth}", "Accept": "application/json", "Content-Type": "application/json"}
+        )
         for attempt in range(self.retries):
             try:
                 with urllib.request.urlopen(req, timeout=self.timeout) as r:
@@ -89,14 +90,22 @@ def open_ticket(sn: ServiceNow, incident_id: str, diag: Diagnosis, burn_rate: fl
                 affected.setdefault(rel[k], "")
     evidence = "\n".join(f"- [{e.ref}] {e.claim}" for e in diag.evidence)
     steps = "\n".join(f"{i}. {s}" for i, s in enumerate(diag.fix_steps, 1))
-    desc = (f"Clearpath incident {incident_id}\n\nSummary: {diag.summary}\nFault type: {diag.fault_type} (confidence {diag.confidence:.2f})\n"
-            f"Localizer ranking: {', '.join(ranking[:5])}\nSLO burn rate: {burn_rate:.1f}x\n\nEvidence:\n{evidence}\n\nSuggested fix (requires approval):\n{steps}\n"
-            + ("\nNOTE: drafted without the LLM (degraded mode).\n" if diag.degraded else ""))
-    inc = sn.create_incident({
-        "short_description": f"[Clearpath] {diag.fault_type} suspected on {diag.root_cause_service}",
-        "description": desc, "urgency": urgency, "impact": impact, "category": "software",
-        "cmdb_ci": root_ci["sys_id"] if root_ci else "", "correlation_id": incident_id,
-    })
+    desc = (
+        f"Clearpath incident {incident_id}\n\nSummary: {diag.summary}\nFault type: {diag.fault_type} (confidence {diag.confidence:.2f})\n"
+        f"Localizer ranking: {', '.join(ranking[:5])}\nSLO burn rate: {burn_rate:.1f}x\n\nEvidence:\n{evidence}\n\nSuggested fix (requires approval):\n{steps}\n"
+        + ("\nNOTE: drafted without the LLM (degraded mode).\n" if diag.degraded else "")
+    )
+    inc = sn.create_incident(
+        {
+            "short_description": f"[Clearpath] {diag.fault_type} suspected on {diag.root_cause_service}",
+            "description": desc,
+            "urgency": urgency,
+            "impact": impact,
+            "category": "software",
+            "cmdb_ci": root_ci["sys_id"] if root_ci else "",
+            "correlation_id": incident_id,
+        }
+    )
     for ci in affected:
         sn.link_ci(inc["sys_id"], ci)
     inc["_affected_cis"] = len(affected)

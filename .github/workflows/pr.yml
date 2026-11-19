@@ -7,15 +7,30 @@ permissions:
   contents: read
 jobs:
   python:
-    runs-on: ubuntu-latest
+    # Windows too: its default text encoding is not UTF-8, which once broke
+    # file I/O that Linux CI could never catch.
+    strategy:
+      fail-fast: false
+      matrix: {os: [ubuntu-latest, windows-latest]}
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: {python-version: "3.12", cache: pip}
       - run: pip install -r requirements-dev.txt
-      - run: ruff check . && ruff format --check .
+      - run: ruff check .
+      - run: ruff format --check .
       - run: mypy
       - run: pytest -q
+  rules:
+    # alerting/SLO rules: promtool lint + unit tests on synthetic series
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - run: pip install pyyaml
+      - run: make rules-test PY=python
   go:
     runs-on: ubuntu-latest
     defaults: {run: {working-directory: correlator}}
@@ -62,7 +77,8 @@ jobs:
           load: true
           tags: ghcr.io/georgethesmart/${{ matrix.name }}:${{ github.sha }}
       - name: Trivy (fail on HIGH/CRITICAL)
-        uses: aquasecurity/trivy-action@0.28.0
+        # pinned to the commit of v0.36.0: a security scanner must not run code a tag move could swap
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: ghcr.io/georgethesmart/${{ matrix.name }}:${{ github.sha }}
           severity: HIGH,CRITICAL

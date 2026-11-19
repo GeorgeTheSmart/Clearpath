@@ -43,7 +43,7 @@ class Chunk:
 def load_runbooks(root: Path) -> list[Chunk]:
     chunks: list[Chunk] = []
     for p in sorted(root.glob("*.md")):
-        raw = p.read_text()
+        raw = p.read_text(encoding="utf-8")
         meta = dict(re.findall(r"^(\w+): (.*)$", raw.split("---")[1], re.M)) if raw.startswith("---") else {}
         body = raw.split("---", 2)[2] if raw.startswith("---") else raw
         doc = meta.get("id", p.stem)

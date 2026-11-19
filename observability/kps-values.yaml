@@ -4,15 +4,33 @@ grafana:
 alertmanager:
   config:
     route:
-      receiver: clearpath-correlator
-      group_by: ['alertname', 'service']
-      group_wait: 10s
-      group_interval: 30s
-      repeat_interval: 30s
+      # Only Clearpath's own rules (labelled clearpath="true") reach the
+      # correlator; the chart's built-ins (Watchdog, etcd, ...) would otherwise
+      # look like a permanent alert storm on "services" outside the topology.
+      receiver: "null"
+      routes:
+        - receiver: clearpath-correlator
+          matchers: ['clearpath="true"']
+          group_by: ['alertname', 'service']
+          group_wait: 10s
+          group_interval: 30s
+          repeat_interval: 30s
     receivers:
+      - name: "null"
       - name: clearpath-correlator
         webhook_configs: [{url: "http://clearpath-correlator.clearpath.svc:8081/api/v1/alerts", send_resolved: true}]
 prometheus:
   prometheusSpec:
+    # select rules / monitors from any release, not only ones labelled for this chart
     ruleSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    serviceMonitorSelectorNilUsesHelmValues: false
     retention: 7d
+    # Metrics must survive a Prometheus restart or reschedule: with the chart's
+    # default emptyDir, one node drain erased all history, including the 30-day
+    # SLO budget data the burn-rate alerts are computed from.
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          accessModes: [ReadWriteOnce]
+          resources: {requests: {storage: 10Gi}}

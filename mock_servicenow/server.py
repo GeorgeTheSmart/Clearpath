@@ -35,7 +35,15 @@ class Store:
     def _seed(self) -> None:
         ids = {}
         for s in topo.SERVICES:
-            r = self.insert("cmdb_ci_service", {"name": s, "operational_status": "1", "busines_criticality": "1 - most critical" if s in ("frontend", "checkoutservice", "paymentservice") else "3 - less critical"})
+            r = self.insert(
+                "cmdb_ci_service",
+                {
+                    "name": s,
+                    "operational_status": "1",
+                    # sic: ServiceNow's real column name is misspelled; do not "fix" it
+                    "busines_criticality": "1 - most critical" if s in ("frontend", "checkoutservice", "paymentservice") else "3 - less critical",
+                },
+            )
             ids[s] = r["sys_id"]
         for c, d in topo.edges():
             self.insert("cmdb_rel_ci", {"parent": ids[c], "child": ids[d], "type": "Depends on::Used by"})

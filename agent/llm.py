@@ -72,7 +72,7 @@ class HTTPProvider:
             p = self.cache_dir / f"{key}.json"
             if p.exists():
                 self.usage.cache_hits += 1
-                return str(json.loads(p.read_text())["text"])
+                return str(json.loads(p.read_text(encoding="utf-8"))["text"])
         t0 = time.time()
         last: Exception | None = None
         for attempt in range(self.retries):
@@ -89,27 +89,53 @@ class HTTPProvider:
         self.usage.output_tokens += tout
         self.usage.wall_s += time.time() - t0
         if self.cache_dir is not None:
-            self.cache_dir.mkdir(parents=True, exist_ok=True)
-            (self.cache_dir / f"{key}.json").write_text(json.dumps({"text": text}))
+            try:
+                self.cache_dir.mkdir(parents=True, exist_ok=True)
+                (self.cache_dir / f"{key}.json").write_text(json.dumps({"text": text}), encoding="utf-8", newline="\n")
+            except OSError:
+                pass  # best-effort (e.g. read-only root FS): never fail a paid completion over its cache
         return text
 
     def _call(self, system: str, user: str, max_tokens: int) -> tuple[str, int, int]:
         if self.name == "anthropic":
-            r = _post("https://api.anthropic.com/v1/messages",
-                      {"model": self.model, "max_tokens": max_tokens, "system": system, "messages": [{"role": "user", "content": user}]},
-                      {"x-api-key": os.environ["ANTHROPIC_API_KEY"], "anthropic-version": "2023-06-01"}, self.timeout)
+            r = _post(
+                "https://api.anthropic.com/v1/messages",
+                {"model": self.model, "max_tokens": max_tokens, "system": system, "messages": [{"role": "user", "content": user}]},
+                {"x-api-key": os.environ["ANTHROPIC_API_KEY"], "anthropic-version": "2023-06-01"},
+                self.timeout,
+            )
             text = "".join(b.get("text", "") for b in r["content"])
             return text, int(r["usage"]["input_tokens"]), int(r["usage"]["output_tokens"])
         if self.name == "openai":
-            r = _post("https://api.openai.com/v1/chat/completions",
-                      {"model": self.model, "max_tokens": max_tokens, "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
-                       "response_format": {"type": "json_object"}},
-                      {"authorization": f"Bearer {os.environ['OPENAI_API_KEY']}"}, self.timeout)
+            r = _post(
+                "https://api.openai.com/v1/chat/completions",
+                {
+                    "model": self.model,
+                    "max_tokens": max_tokens,
+                    "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
+                    "response_format": {"type": "json_object"},
+                },
+                {"authorization": f"Bearer {os.environ['OPENAI_API_KEY']}"},
+                self.timeout,
+            )
             return r["choices"][0]["message"]["content"], int(r["usage"]["prompt_tokens"]), int(r["usage"]["completion_tokens"])
         if self.name == "ollama":
             host = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
-            r = _post(f"{host}/api/chat", {"model": self.model, "stream": False, "format": "json",
-                                           "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]}, {}, self.timeout)
+            r = _post(
+                f"{host}/api/chat",
+                {
+                    "model": self.model,
+                    "stream": False,
+                    "format": "json",
+                    "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
+                    # Without an explicit num_ctx Ollama uses a small default window and
+                    # silently drops the START of a long prompt - the system prompt
+                    # with the safety rules goes first. temperature/seed: reproducible evals.
+                    "options": {"num_ctx": int(os.environ.get("CLEARPATH_NUM_CTX", "8192")), "temperature": 0, "seed": 0, "num_predict": max_tokens},
+                },
+                {},
+                self.timeout,
+            )
             return r["message"]["content"], int(r.get("prompt_eval_count", 0)), int(r.get("eval_count", 0))
         raise ValueError(self.name)
 
@@ -118,5 +144,15 @@ def from_env() -> LLM | None:
     name = os.environ.get("CLEARPATH_LLM", "none").lower()
     if name == "none":
         return None
-    default = {"anthropic": "claude-sonnet-5-5", "openai": "gpt-4o-mini", "ollama": "llama3.1:8b"}[name]
-    return HTTPProvider(name=name, model=os.environ.get("CLEARPATH_MODEL", default))
+    # ollama default: Qwen2.5-7B-Instruct - Apache-2.0 (OSI open source), reliable JSON, fits 8 GB VRAM at Q4
+    defaults = {"anthropic": "claude-sonnet-5-5", "openai": "gpt-4o-mini", "ollama": "qwen2.5:7b-instruct"}
+    if name not in defaults:
+        raise ValueError(f"CLEARPATH_LLM={name!r}: expected one of none, {', '.join(defaults)}")
+    # CLEARPATH_LLM_CACHE: response cache dir (keeps evals reproducible); "off" disables it.
+    cache = os.environ.get("CLEARPATH_LLM_CACHE", ".cache/llm")
+    return HTTPProvider(
+        name=name,
+        model=os.environ.get("CLEARPATH_MODEL", defaults[name]),
+        cache_dir=None if cache == "off" else Path(cache),
+        timeout=float(os.environ.get("CLEARPATH_LLM_TIMEOUT", "120")),  # a local model's first call also loads it
+    )

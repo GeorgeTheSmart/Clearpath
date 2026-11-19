@@ -3,26 +3,70 @@ kind: Deployment
 metadata: {name: clearpath-agent, labels: {app: clearpath-agent}}
 spec:
   replicas: {{ .Values.agent.replicas }}
+  {{- if .Values.agent.persistence.enabled }}
+  # one writer on a ReadWriteOnce volume: stop the old pod before starting the new one
+  # upgrading from a RollingUpdate release: see the migration step in `make deploy-clearpath`
+  strategy: {type: Recreate}
+  {{- end }}
   selector: {matchLabels: {app: clearpath-agent}}
   template:
     metadata: {labels: {app: clearpath-agent}}
     spec:
       serviceAccountName: clearpath-agent
-      securityContext: {runAsNonRoot: true, runAsUser: 10001, seccompProfile: {type: RuntimeDefault}}
+      # fsGroup: the volume is writable by the non-root agent user
+      securityContext: {runAsNonRoot: true, runAsUser: 10001, fsGroup: 10001, seccompProfile: {type: RuntimeDefault}}
       containers:
         - name: agent
           image: "{{ .Values.image.registry }}/clearpath-agent:{{ .Values.image.tag }}"
           args: ["serve"]
           env:
             - {name: CLEARPATH_LLM, value: {{ .Values.agent.llm | quote }}}
+            {{- with .Values.agent.llmModel }}
+            - {name: CLEARPATH_MODEL, value: {{ . | quote }}}
+            {{- end }}
+            {{- with .Values.agent.ollamaHost }}
+            - {name: OLLAMA_HOST, value: {{ . | quote }}}
+            {{- end }}
             - {name: CLEARPATH_VAR, value: /var/clearpath}
+            # the root FS is read-only; the LLM response cache must live on the volume
+            - {name: CLEARPATH_LLM_CACHE, value: /var/clearpath/llm-cache}
+            # live diagnosis of correlator incidents (agent.live); empty = store only
+            - {name: CLEARPATH_PROM, value: {{ .Values.agent.prometheusUrl | quote }}}
+            # dry-run, or kube: approved actions go through the Kubernetes API (rbac.yaml)
+            - {name: CLEARPATH_EXECUTE, value: {{ .Values.agent.execute | quote }}}
+            {{- with .Values.agent.serviceNowUrl }}
+            - {name: CLEARPATH_SN_URL, value: {{ . | quote }}}
+            {{- end }}
           envFrom: [{secretRef: {name: {{ .Values.agent.existingSecret }}, optional: true}}]
           ports: [{containerPort: 8000, name: http}]
+          readinessProbe: {httpGet: {path: /healthz, port: http}, periodSeconds: 10}
+          livenessProbe: {httpGet: {path: /healthz, port: http}, initialDelaySeconds: 10, periodSeconds: 20, failureThreshold: 3}
           resources: {{- toYaml .Values.resources.agent | nindent 12 }}
           securityContext: {allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, capabilities: {drop: [ALL]}}
           volumeMounts: [{name: var, mountPath: /var/clearpath}]
-      volumes: [{name: var, emptyDir: {}}]
+      volumes:
+        {{- if .Values.agent.persistence.enabled }}
+        - {name: var, persistentVolumeClaim: {claimName: clearpath-agent-var}}
+        {{- else }}
+        - {name: var, emptyDir: {}}
+        {{- end }}
 ---
+{{- if .Values.agent.persistence.enabled }}
+# Audit log, incident state and pending approvals must survive restarts and
+# deploys (an emptyDir silently erased the audit trail on every rollout).
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: clearpath-agent-var
+  annotations: {"helm.sh/resource-policy": keep}  # uninstalling the chart must not delete the audit trail
+spec:
+  accessModes: [ReadWriteOnce]
+  {{- with .Values.agent.persistence.storageClass }}
+  storageClassName: {{ . | quote }}
+  {{- end }}
+  resources: {requests: {storage: {{ .Values.agent.persistence.size | quote }}}}
+---
+{{- end }}
 apiVersion: v1
 kind: Service
 metadata: {name: clearpath-agent}
@@ -30,8 +74,10 @@ spec:
   selector: {app: clearpath-agent}
   ports: [{port: 8000, targetPort: http, name: http}]
 ---
-# Only the correlator may call the agent; the agent may egress to the API
-# server, Prometheus/Loki, ServiceNow and the LLM endpoint (DNS allowed).
+# Ingress only: the correlator (incidents) and, if configured, the
+# authenticating proxy (approvals). Egress is NOT restricted here; the targets
+# (API server, Prometheus/Loki, ServiceNow, LLM endpoint) are cluster-specific,
+# so add an egress policy per environment.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata: {name: clearpath-agent}
@@ -39,5 +85,11 @@ spec:
   podSelector: {matchLabels: {app: clearpath-agent}}
   policyTypes: [Ingress]
   ingress:
-    - from: [{podSelector: {matchLabels: {app: clearpath-correlator}}}]
+    - from:
+        - podSelector: {matchLabels: {app: clearpath-correlator}}
+        {{- with .Values.agent.approvalProxyPodLabels }}
+        - podSelector:
+            matchLabels:
+              {{- toYaml . | nindent 14 }}
+        {{- end }}
       ports: [{port: 8000}]

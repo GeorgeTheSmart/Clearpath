@@ -24,20 +24,20 @@ class AuditLog:
     def _last_hash(self) -> str:
         if not self.path.exists() or self.path.stat().st_size == 0:
             return GENESIS
-        last = self.path.read_text().strip().splitlines()[-1]
+        last = self.path.read_text(encoding="utf-8").strip().splitlines()[-1]
         return str(json.loads(last)["hash"])
 
     def append(self, actor: str, event: str, data: dict[str, Any], ts: float | None = None) -> dict[str, Any]:
         rec = {"ts": ts if ts is not None else time.time(), "actor": actor, "event": event, "data": data, "prev": self._last_hash()}
         rec["hash"] = hashlib.sha256(json.dumps(rec, sort_keys=True).encode()).hexdigest()
-        with self.path.open("a") as f:
+        with self.path.open("a", encoding="utf-8", newline="\n") as f:
             f.write(json.dumps(rec, sort_keys=True) + "\n")
         return rec
 
     def records(self) -> list[dict[str, Any]]:
         if not self.path.exists():
             return []
-        return [json.loads(x) for x in self.path.read_text().splitlines() if x.strip()]
+        return [json.loads(x) for x in self.path.read_text(encoding="utf-8").splitlines() if x.strip()]
 
     def verify(self) -> tuple[bool, int]:
         """(ok, index of first bad record or -1)."""

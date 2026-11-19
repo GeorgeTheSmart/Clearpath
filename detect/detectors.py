@@ -193,12 +193,7 @@ def bocpd(z: Arr, hazard: float = 1 / 250, rmax: int = 300, recent: int = 5, cli
         # Student-t predictive for each run length
         nu = 2 * alpha
         scale2 = beta * (kappa + 1) / (alpha * kappa)
-        lpred = (
-            gammaln((nu + 1) / 2)
-            - gammaln(nu / 2)
-            - 0.5 * np.log(np.pi * nu * scale2)
-            - (nu + 1) / 2 * np.log1p((x - mu) ** 2 / (nu * scale2))
-        )
+        lpred = gammaln((nu + 1) / 2) - gammaln(nu / 2) - 0.5 * np.log(np.pi * nu * scale2) - (nu + 1) / 2 * np.log1p((x - mu) ** 2 / (nu * scale2))
         a = logp + lpred
         grow = a + l1h
         cp = np.logaddexp.reduce(a + lh, axis=1)

@@ -12,12 +12,23 @@ from __future__ import annotations
 
 import json
 import re
+from typing import Literal, cast, get_args
 
 from pydantic import ValidationError
 
 from agent.llm import LLM, LLMUnavailable
 from agent.retrieval import Hit
-from agent.schema import Action, Context, Diagnosis, Evidence
+from agent.schema import Action, ActionKind, Context, Diagnosis, Evidence, FaultType
+
+_FAULT_TYPES: frozenset[str] = frozenset(get_args(FaultType))
+_ACTION_FOR_FAULT: dict[str, ActionKind] = {"bad_deploy": "rollback", "bad_config": "rollback", "crash_loop": "rollback", "cpu_hog": "scale"}
+_HIGH_RISK = frozenset({"crash_loop", "bad_config", "bad_deploy", "dependency_down"})
+
+
+def _as_fault_type(raw: str) -> FaultType:
+    """Runbook front-matter is free text; anything outside the schema is 'unknown'."""
+    return cast(FaultType, raw) if raw in _FAULT_TYPES else "unknown"
+
 
 SYSTEM = """You are an SRE incident assistant. You draft a diagnosis for a human on-call engineer, who approves any action.
 
@@ -68,20 +79,29 @@ def fallback(ctx: Context, hits: list[Hit]) -> Diagnosis:
     loc = ctx.by_kind("loc")
     root = loc[0].service if loc and loc[0].service else "unknown"
     fault_hits = [h for h in hits if h.chunk.fault_type != "none"]
-    ft = fault_hits[0].chunk.fault_type if fault_hits else "unknown"
+    ft = _as_fault_type(fault_hits[0].chunk.fault_type) if fault_hits else "unknown"
     ev = [Evidence(ref=loc[0].id, claim=f"localizer ranks {root} first")] if loc else []
     ev += [Evidence(ref=it.id, claim=f"{it.service}: {it.text[:120]}") for it in ctx.items if it.kind == "log" and it.service == root][:3]
     if fault_hits:
         ch = fault_hits[0].chunk
         ev.append(Evidence(ref=f"rb:{ch.id}", claim=f"matching runbook: {ch.text.split('.')[0][:100]}"))
     steps = re.findall(r"^\d+\. (.*)$", fault_hits[0].chunk.text, re.M) if fault_hits else []
-    risk = "high" if ft in ("crash_loop", "bad_config", "bad_deploy", "dependency_down") else "medium"
-    act = {"bad_deploy": "rollback", "bad_config": "rollback", "crash_loop": "rollback", "cpu_hog": "scale"}.get(ft, "rollout_restart")
-    action = Action(kind=act, target=root, replicas=3 if act == "scale" else None)  # type: ignore[arg-type]
+    risk: Literal["medium", "high"] = "high" if ft in _HIGH_RISK else "medium"
+    act: ActionKind = _ACTION_FOR_FAULT.get(ft, "rollout_restart")
+    action = Action(kind=act, target=root, replicas=3 if act == "scale" else None)
     if not ev:
         ev = [Evidence(ref="loc:1", claim="no evidence available")]
-    return Diagnosis(root_cause_service=root, fault_type=ft, confidence=0.5, summary=f"Likely {ft} on {root} (deterministic: localizer + runbook retrieval).",  # type: ignore[arg-type]
-                     evidence=ev, fix_steps=steps or ["Follow the matching runbook."], risk_level=risk, proposed_actions=[action], degraded=True)  # type: ignore[arg-type]
+    return Diagnosis(
+        root_cause_service=root,
+        fault_type=ft,
+        confidence=0.5,
+        summary=f"Likely {ft} on {root} (deterministic: localizer + runbook retrieval).",
+        evidence=ev,
+        fix_steps=steps or ["Follow the matching runbook."],
+        risk_level=risk,
+        proposed_actions=[action],
+        degraded=True,
+    )
 
 
 def diagnose(llm: LLM | None, ctx: Context, services: list[str], hits: list[Hit], include_kinds: set[str]) -> Diagnosis:

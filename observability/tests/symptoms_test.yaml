@@ -1,0 +1,137 @@
+# promtool unit tests for observability/prometheus/alert-rules.yaml.
+# Run: make rules-test   (extracts the CRDs to var/rules, then promtool test rules)
+rule_files: [../../var/rules/alert-rules.yaml]
+evaluation_interval: 30s
+
+tests:
+  # HighErrorRate: 10% inbound failures on cartservice fires after `for: 1m`;
+  # 1% on currencyservice does not.
+  - interval: 30s
+    input_series:
+      - series: 'response_total{namespace="boutique",service="cartservice",direction="inbound",classification="success"}'
+        values: '0+90x30'
+      - series: 'response_total{namespace="boutique",service="cartservice",direction="inbound",classification="failure"}'
+        values: '0+10x30'
+      - series: 'response_total{namespace="boutique",service="currencyservice",direction="inbound",classification="success"}'
+        values: '0+99x30'
+      - series: 'response_total{namespace="boutique",service="currencyservice",direction="inbound",classification="failure"}'
+        values: '0+1x30'
+    alert_rule_test:
+      - eval_time: 1m
+        alertname: HighErrorRate
+        exp_alerts: []   # condition true since 30s, still pending inside `for: 1m`
+      - eval_time: 8m
+        alertname: HighErrorRate
+        exp_alerts:
+          - exp_labels: {severity: critical, clearpath: "true", service: cartservice}
+            exp_annotations:
+              summary: "cartservice error rate above 5%"
+              runbook_url: runbooks/HighErrorRate.md
+              service: cartservice
+
+  # HighLatencyP99, real regression: steady 4 req/s; after 70 min half the
+  # requests take 500-1000 ms instead of <50 ms. p99 jumps >2x its baseline.
+  - interval: 1m
+    input_series:
+      - series: 'response_latency_ms_bucket{namespace="boutique",service="frontend",direction="inbound",le="50.0"}'
+        values: '0+240x70 16800+120x10'
+      - series: 'response_latency_ms_bucket{namespace="boutique",service="frontend",direction="inbound",le="500.0"}'
+        values: '0+240x70 16800+120x10'
+      - series: 'response_latency_ms_bucket{namespace="boutique",service="frontend",direction="inbound",le="1000.0"}'
+        values: '0+240x80'
+      - series: 'response_latency_ms_bucket{namespace="boutique",service="frontend",direction="inbound",le="+Inf"}'
+        values: '0+240x80'
+      - series: 'response_latency_ms_count{namespace="boutique",service="frontend",direction="inbound"}'
+        values: '0+240x80'
+    alert_rule_test:
+      - eval_time: 80m
+        alertname: HighLatencyP99
+        exp_alerts:
+          - exp_labels: {severity: warning, clearpath: "true", service: frontend}
+            exp_annotations:
+              summary: "p99 latency on frontend is more than 2x its last-hour baseline"
+              runbook_url: runbooks/HighLatencyP99.md
+              service: frontend
+
+  # HighLatencyP99, not a regression: the baseline hour saw only a trickle of
+  # fast health probes (2/min), then real traffic arrives. The baseline is not
+  # comparable, so no alert (this fired falsely on the live cluster once).
+  - interval: 1m
+    input_series:
+      - series: 'response_latency_ms_bucket{namespace="boutique",service="frontend",direction="inbound",le="50.0"}'
+        values: '0+2x70 140+120x10'
+      - series: 'response_latency_ms_bucket{namespace="boutique",service="frontend",direction="inbound",le="500.0"}'
+        values: '0+2x70 140+240x10'
+      - series: 'response_latency_ms_bucket{namespace="boutique",service="frontend",direction="inbound",le="+Inf"}'
+        values: '0+2x70 140+240x10'
+      - series: 'response_latency_ms_count{namespace="boutique",service="frontend",direction="inbound"}'
+        values: '0+2x70 140+240x10'
+    alert_rule_test:
+      - eval_time: 80m
+        alertname: HighLatencyP99
+        exp_alerts: []
+
+  # PodCrashLooping: `service` is derived from the pod name, and a restart of
+  # the Linkerd sidecar is not an application crash.
+  - interval: 30s
+    input_series:
+      - series: 'kube_pod_container_status_restarts_total{namespace="boutique",pod="redis-cart-847557c9b8-t86rz",container="redis"}'
+        values: '0 0 0 1 1 1 1 1'
+      - series: 'kube_pod_container_status_restarts_total{namespace="boutique",pod="paymentservice-578f85595-s7pwc",container="linkerd-proxy"}'
+        values: '0 0 0 1 1 1 1 1'
+      # the load generator is the traffic harness, not a managed service
+      - series: 'kube_pod_container_status_restarts_total{namespace="boutique",pod="loadgenerator-5d8b674699-4sm9z",container="main"}'
+        values: '0 0 0 1 1 1 1 1'
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: PodCrashLooping
+        exp_alerts:
+          - exp_labels: {severity: warning, clearpath: "true", service: redis-cart}
+            exp_annotations:
+              summary: "redis-cart container restarted in the last 5 minutes"
+              runbook_url: runbooks/PodCrashLooping.md
+              service: redis-cart
+
+  # TargetDown: a Deployment with replicas wanted but none available; one
+  # scaled to zero on purpose is not "down".
+  - interval: 30s
+    input_series:
+      - series: 'kube_deployment_status_replicas_available{namespace="boutique",deployment="cartservice"}'
+        values: '1 1 0 0 0 0 0 0'
+      - series: 'kube_deployment_spec_replicas{namespace="boutique",deployment="cartservice"}'
+        values: '1x8'
+      - series: 'kube_deployment_status_replicas_available{namespace="boutique",deployment="adservice"}'
+        values: '0x8'
+      - series: 'kube_deployment_spec_replicas{namespace="boutique",deployment="adservice"}'
+        values: '0x8'
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: TargetDown
+        exp_alerts:
+          - exp_labels: {severity: critical, clearpath: "true", service: cartservice, deployment: cartservice, namespace: boutique}
+            exp_annotations:
+              summary: "cartservice has no available replicas"
+              runbook_url: runbooks/TargetDown.md
+              service: cartservice
+
+  # HighMemory: working set of the app container vs its own limit; the
+  # sidecar's memory and limit are excluded.
+  - interval: 30s
+    input_series:
+      - series: 'container_memory_working_set_bytes{namespace="boutique",pod="adservice-58cbfd668f-9mlmq",container="server"}'
+        values: '950x10'
+      - series: 'kube_pod_container_resource_limits{namespace="boutique",pod="adservice-58cbfd668f-9mlmq",container="server",resource="memory"}'
+        values: '1000x10'
+      - series: 'container_memory_working_set_bytes{namespace="boutique",pod="adservice-58cbfd668f-9mlmq",container="linkerd-proxy"}'
+        values: '10x10'
+      - series: 'kube_pod_container_resource_limits{namespace="boutique",pod="adservice-58cbfd668f-9mlmq",container="linkerd-proxy",resource="memory"}'
+        values: '1000000x10'
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: HighMemory
+        exp_alerts:
+          - exp_labels: {severity: warning, clearpath: "true", service: adservice}
+            exp_annotations:
+              summary: "adservice working set above 90% of its memory limit"
+              runbook_url: runbooks/HighMemory.md
+              service: adservice

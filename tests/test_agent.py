@@ -1,6 +1,5 @@
 import json
 import urllib.error
-import random
 from pathlib import Path
 
 import pytest
@@ -9,7 +8,7 @@ from agent import remediation as rem
 from agent.audit import AuditLog
 from agent.guardrails import injection, pii
 from agent.llm import LLMUnavailable, Usage
-from agent.pipeline import Deps, resume, run
+from agent.pipeline import Deps, InvalidIncidentId, NotAwaitingApproval, UnknownIncident, resume, run
 from agent.retrieval import BM25, Retriever, load_runbooks, rrf, tokenize
 from agent.schema import Context, ContextItem, Diagnosis, Evidence
 from agent.servicenow import ServiceNow, urgency_impact
@@ -44,7 +43,7 @@ def test_pii_kinds_and_non_pii_left_alone():
 
 # ---------------------------------------------------------------- injection
 def _load(name):
-    return [json.loads(x) for x in (ROOT / "eval/redteam" / name).read_text().splitlines()]
+    return [json.loads(x) for x in (ROOT / "eval/redteam" / name).read_text(encoding="utf-8").splitlines()]
 
 
 def test_injection_dev_set_regression():
@@ -79,23 +78,38 @@ def test_retriever_finds_runbooks():
 
 # ---------------------------------------------------------------- verification
 def _ctx():
-    return Context(incident_id="i", window=(0, 1), items=[
-        ContextItem(id="log:log-1", kind="log", service="cartservice", text="connection refused calling redis-cart"),
-        ContextItem(id="loc:1", kind="loc", service="redis-cart", text="localizer rank 1: redis-cart"),
-    ])
+    return Context(
+        incident_id="i",
+        window=(0, 1),
+        items=[
+            ContextItem(id="log:log-1", kind="log", service="cartservice", text="connection refused calling redis-cart"),
+            ContextItem(id="loc:1", kind="loc", service="redis-cart", text="localizer rank 1: redis-cart"),
+        ],
+    )
 
 
 def _diag(evidence):
-    return Diagnosis(root_cause_service="redis-cart", fault_type="dependency_down", confidence=0.8, summary="s",
-                     evidence=evidence, fix_steps=["x"], risk_level="high")
+    return Diagnosis(
+        root_cause_service="redis-cart", fault_type="dependency_down", confidence=0.8, summary="s", evidence=evidence, fix_steps=["x"], risk_level="high"
+    )
 
 
 def test_verify_flags_invented_and_unrelated_refs():
     ok = verify(_diag([Evidence(ref="log:log-1", claim="cartservice cannot reach redis-cart")]), _ctx())
     assert ok.hallucination_rate == 0
-    bad = verify(_diag([Evidence(ref="log:log-999", claim="redis-cart oom"),
-                        Evidence(ref="loc:1", claim="the moon is made of cheese")]), _ctx())
+    bad = verify(_diag([Evidence(ref="log:log-999", claim="redis-cart oom"), Evidence(ref="loc:1", claim="the moon is made of cheese")]), _ctx())
     assert bad.unverified == ["log:log-999", "loc:1"] and bad.hallucination_rate == 1.0
+
+
+def test_fallback_survives_runbook_with_unknown_fault_type():
+    """The no-LLM path is the last line of defence; bad runbook metadata must not crash it."""
+    from agent.diagnose import fallback
+    from agent.retrieval import Chunk, Hit
+
+    hit = Hit(chunk=Chunk(id="rb-x#fix", doc_id="rb-x", fault_type="disk_full", text="Disk full.\n1. Free space."), score=1.0)
+    d = fallback(_ctx(), [hit])
+    assert d.fault_type == "unknown" and d.degraded and d.risk_level == "medium"
+    assert [a.kind for a in d.proposed_actions] == ["rollout_restart"] and d.fix_steps == ["Free space."]
 
 
 # ---------------------------------------------------------------- remediation
@@ -124,7 +138,9 @@ def test_execute_requires_matching_human_approval():
     with pytest.raises(rem.NotApproved):
         rem.execute("inc-1", acts, {"approved": True, "approver": "clearpath-agent", "action_hash": h}, ex)
     with pytest.raises(rem.NotApproved):  # approval for different actions
-        rem.execute("inc-1", acts + [{"kind": "rollback", "target": "frontend", "replicas": None}], {"approved": True, "approver": "george", "action_hash": h}, ex)
+        rem.execute(
+            "inc-1", acts + [{"kind": "rollback", "target": "frontend", "replicas": None}], {"approved": True, "approver": "george", "action_hash": h}, ex
+        )
     assert ex.log == []
     out = rem.execute("inc-1", acts, {"approved": True, "approver": "george", "action_hash": h}, ex)
     assert out == ["dry-run: kubectl -n boutique rollout restart deployment/cartservice"]
@@ -136,20 +152,19 @@ def test_audit_chain_detects_tampering(tmp_path):
     for i in range(5):
         log.append("george", "evt", {"i": i}, ts=float(i))
     assert log.verify() == (True, -1)
-    lines = (tmp_path / "a.jsonl").read_text().splitlines()
+    lines = (tmp_path / "a.jsonl").read_text(encoding="utf-8").splitlines()
     rec = json.loads(lines[2])
     rec["actor"] = "mallory"
     lines[2] = json.dumps(rec, sort_keys=True)
-    (tmp_path / "a.jsonl").write_text("\n".join(lines) + "\n")
+    (tmp_path / "a.jsonl").write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
     assert log.verify() == (False, 2)
 
 
 # ---------------------------------------------------------------- ServiceNow + pipeline
 @pytest.fixture(scope="module")
 def sn():
-    port = random.randint(20000, 40000)
-    srv = mock.serve(port)
-    yield ServiceNow(f"http://127.0.0.1:{port}", "admin", "admin")
+    srv = mock.serve(0)  # OS-assigned free port: no collisions between parallel runs
+    yield ServiceNow(f"http://127.0.0.1:{srv.server_address[1]}", "admin", "admin")
     srv.shutdown()
 
 
@@ -159,8 +174,9 @@ def test_urgency_mapping():
 
 def test_mock_auth_and_cmdb(sn):
     bad = ServiceNow(sn.base, "admin", "wrong")
-    with pytest.raises(Exception):
+    with pytest.raises(urllib.error.HTTPError) as e:
         bad.find_ci("frontend")
+    assert e.value.code == 401
     ci = sn.find_ci("cartservice")
     rels = sn.relations(ci["sys_id"])
     assert len(rels) == 3  # frontend->cart, checkout->cart, cart->redis
@@ -202,6 +218,55 @@ def test_pipeline_end_to_end_with_approval(tmp_path, sn):
     assert d.audit.verify()[0]
     events = [r["event"] for r in d.audit.records()]
     assert events.index("approval_decision") < events.index("remediation_executed")
+    # approvals are single-use: replaying one must not remediate a second time
+    n_exec = len(d.executor.log)
+    with pytest.raises(NotAwaitingApproval):
+        resume(s["incident_id"], "george", True, d)
+    assert len(d.executor.log) == n_exec
+
+
+def test_rejected_incident_cannot_be_approved_later(tmp_path, sn):
+    inc = sim.generate(3)
+    d = _deps(tmp_path, sn)
+    s = run(inc, inc.t0, [(inc.root, 1.0)], d)
+    assert resume(s["incident_id"], "george", False, d, "no")["status"] == "rejected"
+    with pytest.raises(NotAwaitingApproval):
+        resume(s["incident_id"], "mallory", True, d)
+    assert d.executor.log == []
+
+
+@pytest.mark.parametrize("bad", ["../state/inc-1", "..\\..\\x", "C:x", "", ".hidden", "a/b", "inc-1\x00"])
+def test_incident_ids_cannot_escape_state_dir(tmp_path, bad):
+    with pytest.raises(InvalidIncidentId):
+        resume(bad, "george", True, _deps(tmp_path, None))
+
+
+def test_unknown_incident(tmp_path):
+    with pytest.raises(UnknownIncident):
+        resume("inc-404", "george", True, _deps(tmp_path, None))
+
+
+def test_llm_cache_is_best_effort(tmp_path, monkeypatch):
+    from agent import llm as llm_mod
+
+    blocker = tmp_path / "not-a-dir"
+    blocker.write_text("x", encoding="utf-8")  # mkdir under a file fails, like a read-only FS
+    p = llm_mod.HTTPProvider(name="ollama", model="m", cache_dir=blocker / "cache")
+    monkeypatch.setattr(p, "_call", lambda *a: ("ok", 1, 1))
+    assert p.complete("s", "u") == "ok" and p.usage.calls == 1
+
+
+def test_llm_from_env(monkeypatch, tmp_path):
+    from agent import llm as llm_mod
+
+    monkeypatch.setenv("CLEARPATH_LLM", "gpt5000")
+    with pytest.raises(ValueError, match="expected one of"):
+        llm_mod.from_env()
+    monkeypatch.setenv("CLEARPATH_LLM", "ollama")
+    monkeypatch.setenv("CLEARPATH_LLM_CACHE", str(tmp_path / "c"))
+    assert llm_mod.from_env().cache_dir == tmp_path / "c"
+    monkeypatch.setenv("CLEARPATH_LLM_CACHE", "off")
+    assert llm_mod.from_env().cache_dir is None
 
 
 def test_llm_down_degrades_gracefully(tmp_path, sn):
@@ -213,9 +278,18 @@ def test_llm_down_degrades_gracefully(tmp_path, sn):
 
 def test_malicious_llm_output_cannot_act_and_untrusted_text_is_sanitised(tmp_path, sn):
     inc = _incident_with_injection()
-    reply = json.dumps({"root_cause_service": inc.root, "fault_type": "dependency_down", "confidence": 0.9, "summary": "x",
-                        "evidence": [{"ref": "log:log-99999", "claim": "made up"}], "fix_steps": ["x"], "risk_level": "low",
-                        "proposed_actions": [{"kind": "scale", "target": inc.root, "replicas": 0}, {"kind": "rollout_restart", "target": inc.root}]})
+    reply = json.dumps(
+        {
+            "root_cause_service": inc.root,
+            "fault_type": "dependency_down",
+            "confidence": 0.9,
+            "summary": "x",
+            "evidence": [{"ref": "log:log-99999", "claim": "made up"}],
+            "fix_steps": ["x"],
+            "risk_level": "low",
+            "proposed_actions": [{"kind": "scale", "target": inc.root, "replicas": 0}, {"kind": "rollout_restart", "target": inc.root}],
+        }
+    )
     llm = FakeLLM(reply=reply)
     d = _deps(tmp_path, sn, llm)
     s = run(inc, inc.t0, [(inc.root, 1.0)], d)
@@ -249,3 +323,43 @@ def test_agent_http_approval_requires_authenticated_user(tmp_path, monkeypatch):
     req = urllib.request.Request(base + "/incidents", data=b'{"id":"inc-x","services":["frontend"]}', method="POST")
     assert urllib.request.urlopen(req).status == 202
     srv.shutdown()
+
+
+def test_agent_http_rejects_bad_input_and_replayed_approvals(tmp_path, monkeypatch):
+    import threading
+    import urllib.request
+    from http.server import ThreadingHTTPServer
+
+    from agent import server
+
+    monkeypatch.setattr(server, "VAR", tmp_path)
+    d = Deps.default(audit=AuditLog(tmp_path / "audit.jsonl"), state_dir=tmp_path / "state")
+    server.Handler.deps = d
+    inc = sim.generate(3)
+    iid = run(inc, inc.t0, [(inc.root, 1.0)], d)["incident_id"]
+    srv = ThreadingHTTPServer(("127.0.0.1", 0), server.Handler)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    base = f"http://127.0.0.1:{srv.server_address[1]}"
+
+    def post(path, body, user="george"):
+        h = {"X-Forwarded-User": user} if user else {}
+        try:
+            with urllib.request.urlopen(urllib.request.Request(base + path, data=body, method="POST", headers=h)) as r:
+                return r.status, json.load(r)
+        except urllib.error.HTTPError as e:
+            return e.code, json.load(e)
+
+    try:
+        assert post("/incidents", b'{"id":"..\\\\..\\\\evil"}')[0] == 400
+        assert post("/incidents", b"[1, 2]")[0] == 400
+        assert post("/incidents", b"{not json")[0] == 400
+        assert post("/approve/..%2F..%2Fx", b'{"approve":true}')[0] == 400
+        assert post("/approve/inc-404", b'{"approve":true}')[0] == 404
+        assert post(f"/approve/{iid}", b'{"approve":true}', user="clearpath-agent")[0] == 403
+        code, body = post(f"/approve/{iid}", b'{"approve":true}')
+        assert code == 200 and body["status"] == "remediated"
+        assert post(f"/approve/{iid}", b'{"approve":true}')[0] == 409
+        assert len(d.executor.log) == 1
+        assert not list(tmp_path.parent.glob("evil*"))
+    finally:
+        srv.shutdown()

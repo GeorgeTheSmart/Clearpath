@@ -25,28 +25,29 @@ Full tables with confidence intervals, paired tests, ablations and robustness ch
 
 | Component | Status in this repo |
 |---|---|
-| Correlator (Go), detectors, localizer, retrieval, guardrails, audit, remediation policy | **Real code, tested and benchmarked.** 68 Python tests + Go property tests (`testing/quick`, checked against a brute-force reference). |
+| Correlator (Go), detectors, localizer, retrieval, guardrails, audit, remediation policy | **Real code, tested and benchmarked.** 129 Python tests (CI on Linux and Windows), 11 `promtool` rule-test scenarios, + Go property tests (`testing/quick`, checked against a brute-force reference). |
 | Incident dataset | **Simulated.** It comes from a seeded simulator of Online Boutique's topology, with 9 fault types (`faults/sim.py`). It is not recorded from a live cluster; see the limitations below. `faults/inject.sh` injects the same catalogue for real on kind. |
 | LLM systems (c)–(e) | **Implemented, not run here.** Providers: Anthropic, OpenAI or Ollama (`agent/llm.py`). The build machine had no network, so there are no LLM accuracy, hallucination or cost numbers yet. Run `CLEARPATH_LLM=ollama make eval` to fill them in. |
 | ServiceNow | **Mock** Table API with a CMDB (`mock_servicenow/`). The client is the same one used against a real PDI. |
-| Prometheus/Grafana/Loki/Tempo, Chaos Mesh suite, Helm, Terraform (VPC/EKS/IAM/S3/ECR), CI/CD | **Written, not applied in the build environment** (no Docker daemon, kubectl or terraform there). CI runs fmt/validate/tflint/checkov, Trivy, Syft and cosign. |
-| LangGraph | The node functions are wired up in `agent/langgraph_app.py`, but that file hasn't been executed. The tested runner is `agent/pipeline.py`, which runs the same nodes. |
-| Live context from PromQL/LogQL (`agent/context.LiveSource`) | **Stub.** Replayed fixtures are the tested path. |
+| Local cluster: kind + Linkerd + Prometheus/Grafana + Chaos Mesh + Helm chart | **Applied and run** (`make up-local`). Request SLIs come from the Linkerd proxies; alerting/SLO rules are unit-tested with `promtool` (`make rules-test`) and verified against the live Prometheus; the chaos suite runs against it (results below). |
+| Terraform (VPC/EKS/IAM/S3/ECR), CI/CD | **Validated, not applied** (applying is paid). `terraform validate` passes; CI runs fmt/validate/tflint/checkov, Trivy, Syft and cosign. |
+| LangGraph | **Real, tested** (`tests/test_langgraph.py`). `agent/langgraph_app.py` runs the same nodes as `agent/pipeline.py` with an interrupt before `remediate`; tests check it stops there, produces the same diagnosis and action hash as the plain runner, resumes only on a human approval, and never remediates on rejection or self-approval. `agent/pipeline.py` stays the default runner because it persists state as JSON for approval from another process. |
+| Live diagnosis on the cluster (`agent/live.py`, `agent/kube.py`) | **Real, tested.** Each correlator incident is diagnosed in the agent pod from Prometheus (Linkerd, cAdvisor, kube-state-metrics), pod logs and events, using the same localizer and pipeline as the evaluation. Approved actions run through the Kubernetes API when `agent.execute=kube` (default `dry-run`). Unit-tested against fake APIs; exercised by the chaos run. Live anomaly scores use a pre-incident baseline, not the multi-day seasonal one ([DESIGN.md](docs/DESIGN.md#live-path)). |
 
 ## Architecture
 
 ```
- Online Boutique (k8s) ── metrics ─▶ Prometheus ─▶ Alertmanager ──webhook──▶ correlator (Go)
-        │ traces ─▶ Tempo        │ SLO burn-rate rules                     dedupe · window+topology
-        └ logs ─▶ Loki                                                     union-find · storm-safe
-                                                                                  │ Incident
- trace call graph ─▶ localize/ (seasonal z → correlation-weighted personalised PageRank)
-                                                                                  ▼
+ Online Boutique (k8s, Linkerd mesh) ─ request SLIs ─▶ Prometheus ─▶ Alertmanager ─webhook─▶ correlator (Go)
+        │ cAdvisor / kube-state-metrics ─▶     │ SLO burn-rate + symptom rules            dedupe · window+topology
+        │                                      │ (promtool unit-tested)                    union-find · storm-safe
+        │                                                                                         │ Incident
+ mesh call graph + metrics + pod logs/events ─▶ agent/live ─▶ localize/ (robust z → correlation-weighted
+                                                                         personalised PageRank)   ▼
  runbooks/ ─▶ BM25 + dense, RRF ─▶ agent/pipeline: gather → sanitize → retrieve → diagnose
                                      (PII redaction, injection quarantine)   (typed JSON, every
                                                                               evidence ID verified)
                                    → ServiceNow incident + CMDB CIs → await human approval
-                                   → allow-listed reversible action (dry-run/kubectl, 1 namespace)
+                                   → allow-listed reversible action (dry-run, or Kubernetes API in 1 namespace)
                                    → hash-chained audit log
 ```
 
@@ -55,12 +56,38 @@ Full tables with confidence intervals, paired tests, ablations and robustness ch
 ```bash
 pip install -r requirements-dev.txt
 make test          # Python + Go tests, mypy
+make rules-test    # promtool: lint + unit-test the alerting/SLO rules (Docker)
 make bench         # correlator throughput / latency / percolation sweep
 make eval          # detection → localization → end-to-end; regenerates the table above
 make demo          # replay one held-out incident: ticket, approval, dry-run remediation, audit verify
 ```
 
-Cluster path (needs Docker, kind, helm): `make up-local && make chaos`. AWS path (**paid**, asks for confirmation): `make aws-up`, demo, `make aws-down`; see [docs/COST.md](docs/COST.md) for the hourly estimate and teardown checklist.
+With the open-source LLM (Qwen2.5-7B-Instruct, Apache-2.0, via Ollama in Docker; an 8 GB GPU is enough):
+
+```bash
+make llm-up        # start Ollama and pull the model (~4.7 GB)
+make eval-llm      # adds LLM systems (c)-(e) and the end-to-end LLM red team to the results
+```
+
+The full local cluster (Docker, kind, helm, kubectl; about 15 minutes the first time):
+
+```bash
+make up-local      # kind + Linkerd + Online Boutique + monitoring + Chaos Mesh + Clearpath
+make chaos         # fault experiments asserted against Prometheus (~30 min)
+make down
+```
+
+**Windows.** The same `make` targets work from PowerShell with GNU make and Git for Windows (the Makefile uses Git's bash automatically) and a Python 3.12 venv in `.venv` (3.13+ may lack wheels for some deps):
+
+```powershell
+winget install Git.Git ezwinports.make GoLang.Go Kubernetes.kind Kubernetes.kubectl Helm.Helm
+py -3.12 -m venv .venv; .\.venv\Scripts\pip install -r requirements-dev.txt
+make test demo
+```
+
+If Windows **Smart App Control** is on, it blocks the unsigned binaries Go builds for tests, so run the Go half in a container instead: `make test bench GO_IN_DOCKER=1` (needs Docker Desktop).
+
+AWS path (**paid**, asks for confirmation): `make aws-up`, demo, `make aws-down`; see [docs/COST.md](docs/COST.md) for the hourly estimate and teardown checklist.
 
 ## Repository map
 

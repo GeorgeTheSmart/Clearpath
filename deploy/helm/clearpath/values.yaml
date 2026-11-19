@@ -7,11 +7,31 @@ correlator:
   window: 5m
   crossWindow: 60s
   lateness: 30s
+  # announce an incident 1 min after its first alert (related alerts gather
+  # first), so a sustained outage is diagnosed while it lasts, not after
+  openAfter: 60s
 agent:
   replicas: 1
   llm: none               # anthropic | openai | ollama | none
+  llmModel: ""            # empty = provider default (ollama: qwen2.5:7b-instruct)
+  ollamaHost: ""          # e.g. http://clearpath-ollama:11434 (local: `make llm-up`, on the kind network)
   existingSecret: clearpath-secrets   # ANTHROPIC_API_KEY / SN_USER / SN_PASSWORD
-  serviceNowUrl: http://mock-servicenow.clearpath.svc:8090
+  # ServiceNow instance (+ SN_USER / SN_PASSWORD in existingSecret). Empty = an
+  # in-process mock with the Online Boutique CMDB (local clusters, demos).
+  serviceNowUrl: ""
+  # Live diagnosis: Prometheus with the Linkerd PodMonitor + kube-state-metrics.
+  # Empty = incidents are stored but not diagnosed.
+  prometheusUrl: http://kps-kube-prometheus-stack-prometheus.monitoring.svc:9090
+  # dry-run: approved actions are only logged. kube: executed through the
+  # Kubernetes API with the namespaced Role in rbac.yaml (no delete/exec/secrets).
+  execute: dry-run
+  # Audit log + incident state + pending approvals. Off = emptyDir (lost on restart).
+  persistence: {enabled: true, size: 1Gi, storageClass: ""}
+  # Pod labels of the authenticating proxy (oauth2-proxy / Slack verifier) that
+  # sets X-Forwarded-User for /approve. Empty = only the correlator can reach
+  # the agent over the network; approve through `kubectl port-forward`.
+  # Example: {app: oauth2-proxy}
+  approvalProxyPodLabels: {}
 resources:
   correlator: {requests: {cpu: 50m, memory: 64Mi}, limits: {cpu: 500m, memory: 256Mi}}
   agent: {requests: {cpu: 100m, memory: 256Mi}, limits: {cpu: "1", memory: 1Gi}}
